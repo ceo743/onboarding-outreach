@@ -286,7 +286,7 @@ function renderIntro(){
 function renderShell(innerHtml){
   const app = document.getElementById('app');
   const total = ALL.length;
-  const completed = Object.keys(state.answers).length;
+  const completed = Object.keys(state.answers).filter(id => !state.skipped[id]).length;
   const showProgress = state.stage === 'question';
   app.innerHTML = `
     <div class="shell">
