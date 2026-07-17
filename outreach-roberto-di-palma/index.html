@@ -1,0 +1,467 @@
+<title>Onboarding — Roberto Di Palma</title>
+<style>
+:root{
+  --paper:#eeece5;
+  --paper-raised:#f8f6f0;
+  --ink:#20221f;
+  --ink-soft:#54574f;
+  --line:#d8d4c8;
+  --accent:#2f5d50;
+  --accent-soft:#dde6e0;
+  --warn:#a85a2b;
+  --warn-soft:#f1e2d3;
+  --focus:#1c463a;
+  --shadow: 0 2px 10px rgba(32,34,31,0.06);
+  --backdrop: rgba(20,22,19,0.55);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#16181b;
+    --paper-raised:#1e2124;
+    --ink:#e9e7de;
+    --ink-soft:#9a9d94;
+    --line:#34372f;
+    --accent:#7fb3a1;
+    --accent-soft:#233229;
+    --warn:#d99a63;
+    --warn-soft:#3a2a1c;
+    --focus:#a9d3c3;
+    --shadow: 0 2px 14px rgba(0,0,0,0.45);
+    --backdrop: rgba(8,9,7,0.65);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#16181b; --paper-raised:#1e2124; --ink:#e9e7de; --ink-soft:#9a9d94;
+  --line:#34372f; --accent:#7fb3a1; --accent-soft:#233229; --warn:#d99a63;
+  --warn-soft:#3a2a1c; --focus:#a9d3c3; --shadow: 0 2px 14px rgba(0,0,0,0.45); --backdrop: rgba(8,9,7,0.65);
+}
+:root[data-theme="light"]{
+  --paper:#eeece5; --paper-raised:#f8f6f0; --ink:#20221f; --ink-soft:#54574f;
+  --line:#d8d4c8; --accent:#2f5d50; --accent-soft:#dde6e0; --warn:#a85a2b;
+  --warn-soft:#f1e2d3; --focus:#1c463a; --shadow: 0 2px 10px rgba(32,34,31,0.06); --backdrop: rgba(20,22,19,0.55);
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:Charter,"Iowan Old Style","Palatino Linotype",Georgia,serif;
+  min-height:100vh;
+}
+.shell{ display:grid; grid-template-columns:280px 1fr; min-height:100vh; }
+@media (max-width:820px){ .shell{ grid-template-columns:1fr; } .rail{ display:none; } }
+
+.rail{
+  border-right:1px solid var(--line); padding:32px 24px; background:var(--paper-raised);
+  display:flex; flex-direction:column; gap:24px;
+}
+.rail h1{ font-size:15px; font-weight:600; letter-spacing:.02em; margin:0 0 4px; font-family:ui-sans-serif,system-ui,sans-serif; }
+.rail .sub{ font-size:12.5px; color:var(--ink-soft); line-height:1.5; margin:0; }
+.rail .sections{ display:flex; flex-direction:column; gap:2px; margin-top:8px; }
+.rail .section-item{
+  font-family:ui-sans-serif,system-ui,sans-serif; font-size:12.5px;
+  padding:9px 11px; border-radius:7px; color:var(--ink-soft);
+  display:flex; justify-content:space-between; gap:8px; align-items:baseline;
+}
+.rail .section-item.active{ background:var(--accent-soft); color:var(--ink); font-weight:600; }
+.rail .section-item .n{ font-variant-numeric:tabular-nums; font-size:11px; opacity:.7; }
+
+.main{ display:flex; flex-direction:column; min-height:100vh; }
+.topbar{ padding:24px 40px 0; display:flex; flex-direction:column; gap:10px; }
+.progress-line{ height:4px; background:var(--line); border-radius:3px; overflow:hidden; }
+.progress-fill{ height:100%; background:var(--accent); border-radius:3px; transition:width .35s ease; width:0%; }
+.progress-meta{
+  display:flex; justify-content:space-between; font-family:ui-sans-serif,system-ui,sans-serif;
+  font-size:12px; color:var(--ink-soft); font-variant-numeric:tabular-nums;
+}
+.progress-meta b{ color:var(--ink); }
+
+.stage{ flex:1; display:flex; align-items:center; justify-content:center; padding:24px 40px 60px; }
+.card{ width:100%; max-width:600px; }
+.card-panel{
+  background:var(--paper-raised); border:1px solid var(--line); border-radius:16px;
+  padding:40px 44px; box-shadow:var(--shadow);
+}
+@media (max-width:600px){ .card-panel{ padding:28px 24px; } }
+
+.eyebrow{
+  font-family:ui-sans-serif,system-ui,sans-serif; font-size:11.5px; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--ink-soft); margin:0 0 14px;
+}
+.question{ font-size:27px; line-height:1.28; margin:0 0 18px; text-wrap:balance; font-weight:500; }
+.hint{ font-size:14.5px; color:var(--ink-soft); margin:-6px 0 22px; line-height:1.55; max-width:52ch; }
+
+.status-chip{
+  display:inline-flex; align-items:center; gap:6px; font-family:ui-sans-serif,system-ui,sans-serif;
+  font-size:11.5px; padding:5px 11px; border-radius:100px; margin-bottom:18px;
+  font-weight:600; letter-spacing:.01em;
+}
+.status-chip.draft{ background:var(--accent-soft); color:var(--accent); }
+.status-chip.missing{ background:var(--warn-soft); color:var(--warn); }
+.status-chip.confirmed{ background:var(--accent-soft); color:var(--accent); }
+.status-chip::before{ content:"●"; font-size:8px; }
+
+textarea{
+  width:100%; min-height:130px; padding:16px 18px; font-size:16px; line-height:1.55;
+  font-family:Charter,"Iowan Old Style",Georgia,serif; color:var(--ink);
+  background:var(--paper); border:1px solid var(--line); border-radius:10px;
+  resize:vertical; outline:none;
+}
+textarea:focus{ border-color:var(--focus); box-shadow:0 0 0 3px var(--accent-soft); }
+textarea::placeholder{ color:var(--ink-soft); font-family:ui-sans-serif,system-ui,sans-serif; font-size:14px; }
+
+.critical-note{
+  display:flex; gap:10px; align-items:flex-start; margin-top:14px; padding:13px 15px;
+  background:var(--warn-soft); border-radius:9px; font-family:ui-sans-serif,system-ui,sans-serif;
+  font-size:13px; color:var(--warn); line-height:1.5;
+}
+
+.actions{ display:flex; justify-content:space-between; align-items:center; margin-top:30px; font-family:ui-sans-serif,system-ui,sans-serif; }
+.actions .left{ display:flex; gap:8px; flex-wrap:wrap; }
+button{
+  font-family:ui-sans-serif,system-ui,sans-serif; font-size:14px; font-weight:600;
+  padding:11px 20px; border-radius:9px; border:1px solid transparent; cursor:pointer;
+  transition:opacity .15s ease, transform .1s ease;
+}
+button:active{ transform:scale(.98); }
+button:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+button.primary{ background:var(--accent); color:var(--paper-raised); }
+button.primary:hover{ opacity:.88; }
+button.ghost{ background:transparent; color:var(--ink-soft); border-color:var(--line); }
+button.ghost:hover{ color:var(--ink); border-color:var(--ink-soft); }
+button.text{ background:transparent; color:var(--ink-soft); padding:11px 6px; }
+button.text:hover{ color:var(--ink); text-decoration:underline; }
+
+.center-screen{ text-align:center; }
+.center-screen .question{ font-size:25px; }
+
+.recap-list{ text-align:left; margin:22px 0; display:flex; flex-direction:column; gap:0; }
+.recap-row{ display:grid; grid-template-columns:1fr auto; gap:14px; padding:14px 0; border-bottom:1px solid var(--line); align-items:start; }
+.recap-row:last-child{ border-bottom:none; }
+.recap-row .rk{ font-family:ui-sans-serif,system-ui,sans-serif; font-size:12.5px; color:var(--ink-soft); line-height:1.4; }
+.recap-row .rv{ font-size:14.5px; line-height:1.5; margin-top:4px; }
+.recap-row .rv.skip{ color:var(--ink-soft); font-style:italic; font-size:13.5px; }
+.recap-row .redit{
+  font-family:ui-sans-serif,system-ui,sans-serif; font-size:12.5px; font-weight:600; color:var(--accent);
+  background:none; border:none; cursor:pointer; padding:4px 0; white-space:nowrap; text-decoration:underline;
+}
+
+.gate input{
+  width:100%; padding:14px 16px; font-size:15px; margin-bottom:6px;
+  font-family:ui-sans-serif,system-ui,sans-serif; color:var(--ink);
+  background:var(--paper); border:1px solid var(--line); border-radius:9px; outline:none;
+}
+.gate input:focus{ border-color:var(--focus); box-shadow:0 0 0 3px var(--accent-soft); }
+.gate-error{ color:var(--warn); font-family:ui-sans-serif,system-ui,sans-serif; font-size:13.5px; margin:6px 0 14px; min-height:1.2em; text-align:left; }
+
+.modal-backdrop{
+  position:fixed; inset:0; background:var(--backdrop); display:flex; align-items:center; justify-content:center;
+  padding:24px; z-index:50;
+}
+.modal-panel{
+  background:var(--paper-raised); border:1px solid var(--line); border-radius:16px;
+  padding:36px 40px; max-width:480px; box-shadow:var(--shadow); text-align:center;
+}
+.modal-panel .question{ font-size:22px; }
+.modal-panel .hint{ margin:0 auto 22px; }
+
+@media (prefers-reduced-motion:reduce){ *{ transition:none !important; } }
+</style>
+
+<div id="app"></div>
+
+<script>
+const CLIENT_NAME = "Roberto Di Palma";
+const CLIENT_SLUG = "roberto-di-palma";
+const GATE_EMAIL = "r.dipalma@dpway.it";
+const WEBHOOK_URL = "https://hooks.zapier.com/hooks/catch/6421650/442abaj/";
+const STORAGE_KEY = "dcacademy_onboarding_" + CLIENT_SLUG;
+
+const SECTIONS = [
+  { title: "Anagrafica", questions: [
+    { id:"anag_nomecompleto", text:"Nome e cognome", draft:"Roberto Di Palma" },
+    { id:"anag_email", text:"Email", draft:"r.dipalma@dpway.it" },
+  ]},
+  { title: "Storia e informazioni generali", questions: [
+    { id:"storia_nascita", text:"Da quanto siete nati? Raccontateci una veloce panoramica della vostra storia.", draft:"Mi occupo di cybersecurity e difesa da 25 anni. La mia azienda e' sul mercato da 7-8 anni, con team a Roma, Milano e Bari: oggi siamo 65 persone." },
+    { id:"storia_eventi", text:"Che eventi rilevanti vi hanno portato dove siete ora? Sviluppo prodotti, contratti importanti, fusioni, acquisizioni.", draft:"Ho aperto una sede distaccata in Bulgaria per poter eseguire penetration test che in Italia sarebbero illegali su sistemi in produzione. Stiamo inoltre diversificando dai clienti storici (pubblica amministrazione e difesa) verso sanita'/farmaceutico e PMI, per non dipendere da un solo settore." },
+    { id:"storia_strategia", text:"Qual è la vostra strategia di crescita? Su quali punti si basa il piano industriale?", draft:"Punto su LinkedIn per posizionamento, non per fare l'influencer o il guru: contenuti verticali sulla cybersecurity, aggancio soprattutto tramite un Vulnerability Assessment gratuito e, dove possibile, testimonianze indirette con loghi di clienti autorizzati." },
+  ]},
+  { title: "Target e mercato", questions: [
+    { id:"mercato_settore", text:"In che settore opera l'attività?", draft:"Cybersecurity e difesa informatica: penetration test, vulnerability assessment, SOC (Security Operation Center) come servizio esterno, ICT Security Assessment." },
+    { id:"mercato_target", text:"Chi è il vostro target cliente? Descrivete l'avatar: ruolo, tipo di azienda, dipendenti, fatturato.", draft:"Aziende medio-grandi e multinazionali con fatturato importante, soprattutto quelle soggette alla direttiva NIS2 (settore manifatturiero, oltre 2 milioni di fatturato e oltre 50 dipendenti) o che devono certificarsi ISO 27001. Parlo soprattutto con CISO e CTO, o con l'imprenditore stesso nelle aziende piu' piccole." },
+    { id:"mercato_clienti_attuali", text:"Chi sono i vostri clienti attuali? Se possibile, indicateci delle referenze.", draft:"Aziende pubbliche/PA e settore difesa, citabili solo in modo generico (mai nomi specifici come servizi segreti o Presidenza del Consiglio dei Ministri). In diversificazione verso sanita'/farmaceutico e PMI. Esempio recente: un ospedale da campo in ambito difesa militare ci ha chiesto un'analisi di vulnerabilita'." },
+    { id:"mercato_problemi", text:"Quali problemi dei vostri clienti risolvete?", draft:"Molte aziende sottovalutano la NIS2 come gia' successo col GDPR: dal 1 gennaio 2026 e' obbligatorio autodenunciarsi all'Agenzia Nazionale Cybersicurezza entro il 28 febbraio di ogni anno, pena sanzioni fino al 4% del fatturato. Spesso le aziende non conoscono le proprie vulnerabilita' reali ne' hanno un servizio di monitoraggio (SOC) esterno." },
+    { id:"mercato_esclusioni", text:"Ci sono clienti o aziende con cui non potete lavorare?", draft:"Non posso menzionare servizi segreti, intelligence o rapporti diretti con la Presidenza del Consiglio dei Ministri, anche se tra i clienti nel tempo ci sono stati enti di quel livello. Posso invece citare il tema \"difesa\" in generale (incluse forze dell'ordine, autorita' portuale). Nessun nome di concorrente diretto e' emerso in call (da confermare con Roberto). I loghi di clienti reali si possono mostrare solo con autorizzazione esplicita del cliente citato, da chiedere sempre e da rimuovere su richiesta.", critical:true, criticalNote:"Campo di sicurezza: questi nomi non li contatteremo mai. Se Roberto conosce aziende o persone specifiche da escludere, va aggiornato qui sopra." },
+    { id:"mercato_eventi_settore", text:"Ci sono eventi o novità nel vostro settore che possono influenzare il business, in positivo o negativo?", draft:"Dal 1 gennaio 2026 e' obbligatorio l'adeguamento alla direttiva NIS2 per le aziende del settore manifatturiero con piu' di 2 milioni di fatturato e piu' di 50 dipendenti: entro il 28 febbraio di ogni anno vanno autodenunciate all'Agenzia Nazionale Cybersicurezza, altrimenti scattano sanzioni automatiche (il sistema incrocia i codici ATECO con l'Agenzia delle Entrate) fino al 4% del fatturato, come per il GDPR." },
+  ]},
+  { title: "Offerta e soluzioni", questions: [
+    { id:"offerta_servizi", text:"Che servizi o prodotti offrite?", draft:"Penetration test, Vulnerability Assessment, SOC (Security Operation Center) come servizio esterno, ICT Security Assessment." },
+    { id:"offerta_priorita", text:"C'è un servizio o prodotto che ritenete più opportuno promuovere in questa collaborazione?", draft:"Il Vulnerability Assessment, che normalmente costa tra 4.000 e 7.000 euro, lo offro gratuitamente ai potenziali clienti per far vedere concretamente le loro vulnerabilita': e' il gancio piu' efficace per entrare in relazione con nuovi clienti." },
+    { id:"offerta_come_funziona", text:"Come funzionano le vostre soluzioni, in pratica?", draft:"Il Vulnerability Assessment lo facciamo sia in modalita' \"invisibile\" all'utente (email fantasma, test mirati senza che se ne accorga) sia con strumenti come Nexus, eseguiti direttamente dall'Italia. Il Penetration Test invece, per motivi normativi, in Italia si puo' fare solo su sistemi non in produzione: per testare ambienti in produzione operiamo dalla sede in Bulgaria." },
+    { id:"offerta_casi", text:"Ci fareste qualche esempio concreto di progetti seguiti con clienti referenziabili?", draft:"(da compilare - nessuna fonte disponibile, nessun caso cliente specifico citabile emerso in call)" },
+    { id:"offerta_risultato", text:"Qual è il risultato desiderato che vendete?", draft:"Individuare le vulnerabilita' reali dell'azienda e attivare le precauzioni per prevenire attacchi informatici, oltre a mettere il cliente in regola con gli obblighi normativi (NIS2, ISO 27001)." },
+    { id:"offerta_tempo", text:"In quanto tempo, in media, il cliente ottiene quel risultato?", draft:"(da compilare)" },
+    { id:"offerta_effort", text:"Che effort o sacrifici deve affrontare il cliente per raggiungere il risultato?", draft:"(da compilare)" },
+    { id:"offerta_novita", text:"Ci sono soluzioni che avete in programma di aggiungere o aggiornare nel catalogo?", draft:"(da compilare - nessuna fonte disponibile)" },
+  ]},
+  { title: "Competizione e posizionamento", questions: [
+    { id:"comp_bigplayer", text:"Quali sono i \"big player\" o le realtà più conosciute nel vostro settore?", draft:"(da compilare - nessun nome di concorrente diretto emerso in call)" },
+    { id:"comp_differenziazione", text:"Che cosa vi differenzia dalla concorrenza? Referenze, specializzazioni, o motivi per cui un cliente sceglie voi.", draft:"25 anni di esperienza nel settore, clienti istituzionali e governativi (citabili solo genericamente come \"difesa\", mai nel dettaglio), un network costruito su passaparola e credibilita' piu' che su comunicazione pubblica. Non voglio posizionarmi come hacker o guru: sono un imprenditore con piu' aziende nel settore." },
+    { id:"comp_credibilita", text:"Che elementi di credibilità possiamo usare? Pubblicazioni, numeri, referenze significative.", draft:"25 anni nella cybersecurity, azienda attiva da 7-8 anni con 65 dipendenti tra Roma, Milano e Bari, clienti istituzionali e in ambito difesa (citabili solo in modo generico), loghi di clienti reali autorizzati da mostrare sul profilo previa richiesta di autorizzazione." },
+    { id:"comp_leve", text:"Quali leve usate in marketing o vendita per convertire il cliente?", draft:"Vulnerability Assessment gratuito come gancio principale di outreach; in prospettiva webinar/eventi online con un cliente reale come speaker che racconta un problema risolto insieme; loghi clienti autorizzati in copertina/profilo." },
+  ]},
+  { title: "Marketing e attività commerciale", questions: [
+    { id:"mkt_acquisizione", text:"Come avete acquisito i vostri clienti finora?", draft:"Storicamente passaparola, credibilita' e network personale, non comunicazione a pagamento." },
+    { id:"mkt_canali", text:"Quali canali di marketing avete usato per acquisirli?", draft:"LinkedIn come canale principale, con restyling del profilo, un post a settimana e commenti su notizie di attualita' nel settore (mai post virali generici)." },
+    { id:"mkt_non_funzionato", text:"Cosa avete provato in passato che non ha funzionato?", draft:"(da compilare)" },
+    { id:"mkt_canali_futuri", text:"Ci sono canali che ritenete interessanti e non avete ancora usato?", draft:"Eventi/webinar online con un cliente reale come speaker che racconta un problema risolto insieme (finora fatti solo eventi in presenza, mai online)." },
+    { id:"mkt_investimento", text:"State investendo in marketing in questo momento? Avete mai investito?", draft:"(da compilare)" },
+    { id:"mkt_tempo_lead", text:"Quanto tempo passa, in media, da quando un lead entra nel processo di vendita a quando diventa cliente?", draft:"(da compilare)" },
+  ]},
+];
+
+const ALL = [];
+SECTIONS.forEach((s, si) => s.questions.forEach((q) => ALL.push({ ...q, sectionIndex: si, sectionTitle: s.title })));
+
+let state = { stage:'gate', i:0, answers:{}, skipped:{}, returnToRecap:false, submitted:false };
+
+function saveLocal(){
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
+}
+function loadLocal(){
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) { const parsed = JSON.parse(raw); state = Object.assign(state, parsed); }
+  } catch(e){}
+}
+
+function renderGate(){
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="shell" style="grid-template-columns:1fr;">
+      <div class="main"><div class="stage">
+        <div class="card card-panel gate">
+          <p class="eyebrow">Onboarding ${CLIENT_NAME}</p>
+          <h2 class="question">Inserisci la tua email per iniziare</h2>
+          <p class="hint">Ti serve per accedere alle domande che abbiamo preparato per te.</p>
+          <input type="email" placeholder="La tua email" id="gateEmail" />
+          <p class="gate-error" id="gateError"></p>
+          <button class="primary" id="gateBtn" style="width:100%;">Continua</button>
+        </div>
+      </div></div>
+    </div>
+  `;
+  const check = () => {
+    const val = document.getElementById('gateEmail').value.trim().toLowerCase();
+    if (val === GATE_EMAIL.toLowerCase()) {
+      state.stage = 'intro';
+      saveLocal();
+      renderAll();
+    } else {
+      document.getElementById('gateError').textContent = 'Email non riconosciuta. Riprova.';
+    }
+  };
+  document.getElementById('gateBtn').onclick = check;
+  document.getElementById('gateEmail').addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+}
+
+function renderIntro(){
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="modal-backdrop">
+      <div class="modal-panel">
+        <p class="eyebrow">Prima di iniziare</p>
+        <h2 class="question">Rispondi alle domande che trovi qui</h2>
+        <p class="hint">Alcune risposte sono già scritte: le abbiamo prese dalla nostra call, dal tuo profilo LinkedIn e dal sito. Leggile, correggile dove serve, o lasciale così se vanno bene. Puoi anche saltare una domanda se preferisci risponderle dopo.</p>
+        <button class="primary" id="introBtn" style="width:100%;">Inizia</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('introBtn').onclick = () => {
+    state.stage = 'question';
+    saveLocal();
+    renderAll();
+  };
+}
+
+function renderShell(innerHtml){
+  const app = document.getElementById('app');
+  const total = ALL.length;
+  const completed = Object.keys(state.answers).filter(id => !state.skipped[id]).length;
+  const showProgress = state.stage === 'question';
+  app.innerHTML = `
+    <div class="shell">
+      <aside class="rail">
+        <div>
+          <h1>Onboarding — ${CLIENT_NAME}</h1>
+          <p class="sub">Le risposte con il pallino verde sono bozze scritte da noi da LinkedIn e dalla trascrizione della prima call. Confermale, correggile, o saltale.</p>
+        </div>
+        <div class="sections" id="railSections"></div>
+      </aside>
+      <div class="main">
+        ${showProgress ? `
+        <div class="topbar">
+          <div class="progress-line"><div class="progress-fill" style="width:${Math.round((state.i/total)*100)}%"></div></div>
+          <div class="progress-meta">
+            <span>Domanda ${state.i+1} di ${total}</span>
+            <span><b>${Math.round((completed/total)*100)}%</b> risposto</span>
+          </div>
+        </div>` : ''}
+        <div class="stage"><div class="card">${innerHtml}</div></div>
+      </div>
+    </div>
+  `;
+  const el = document.getElementById('railSections');
+  SECTIONS.forEach((s, si) => {
+    const answeredInSection = s.questions.filter(q => state.answers[q.id] !== undefined).length;
+    const div = document.createElement('div');
+    const isActive = state.stage === 'question' && ALL[state.i] && ALL[state.i].sectionIndex === si;
+    div.className = 'section-item' + (isActive ? ' active' : '');
+    div.innerHTML = `<span>${s.title}</span><span class="n">${answeredInSection}/${s.questions.length}</span>`;
+    el.appendChild(div);
+  });
+}
+
+function statusChip(q){
+  if (state.answers[q.id] !== undefined) {
+    if (state.skipped[q.id]) return `<span class="status-chip missing">Saltata</span>`;
+    return `<span class="status-chip confirmed">Confermata</span>`;
+  }
+  if (q.draft) return `<span class="status-chip draft">Bozza nostra da verificare</span>`;
+  return `<span class="status-chip missing">Da compilare</span>`;
+}
+
+function renderQuestion(){
+  const q = ALL[state.i];
+  const existing = state.answers[q.id];
+  const value = existing !== undefined ? existing : q.draft;
+  const html = `
+    <div class="card-panel">
+      <p class="eyebrow">${q.sectionTitle}</p>
+      ${statusChip(q)}
+      <h2 class="question">${q.text}</h2>
+      <textarea id="answerBox" placeholder="Scrivi qui la risposta...">${(value||'').replace(/</g,'&lt;')}</textarea>
+      ${q.critical ? `<div class="critical-note">⚠ ${q.criticalNote}</div>` : ''}
+      <div class="actions">
+        <div class="left">
+          ${state.i > 0 && !state.returnToRecap ? `<button class="ghost" id="backBtn">Torna indietro</button>` : ''}
+          <button class="text" id="skipBtn">Salta questa domanda</button>
+        </div>
+        <button class="primary" id="nextBtn">${state.returnToRecap ? 'Salva e torna al riepilogo' : (state.i === ALL.length - 1 ? 'Vai al riepilogo' : 'Conferma e continua')}</button>
+      </div>
+    </div>
+  `;
+  renderShell(html);
+  document.getElementById('nextBtn').onclick = () => {
+    const val = document.getElementById('answerBox').value.trim();
+    state.answers[q.id] = val;
+    state.skipped[q.id] = val === '';
+    advance();
+  };
+  document.getElementById('skipBtn').onclick = () => {
+    state.answers[q.id] = '';
+    state.skipped[q.id] = true;
+    advance();
+  };
+  const backBtn = document.getElementById('backBtn');
+  if (backBtn) backBtn.onclick = () => { state.i--; saveLocal(); renderAll(); };
+}
+
+function advance(){
+  if (state.returnToRecap) {
+    state.returnToRecap = false;
+    state.stage = 'recap';
+  } else if (state.i < ALL.length - 1) {
+    state.i++;
+  } else {
+    state.stage = 'recap';
+  }
+  saveLocal();
+  renderAll();
+}
+
+function editFromRecap(index){
+  state.i = index;
+  state.returnToRecap = true;
+  state.stage = 'question';
+  saveLocal();
+  renderAll();
+}
+
+function renderRecap(){
+  const rows = ALL.map((q, idx) => {
+    const v = state.answers[q.id] !== undefined ? state.answers[q.id] : q.draft;
+    const skip = state.answers[q.id] !== undefined ? state.skipped[q.id] : (!q.draft);
+    return `<div class="recap-row">
+      <div>
+        <div class="rk">${q.text}</div>
+        <div class="rv ${skip ? 'skip' : ''}">${skip ? '(nessuna risposta)' : (v||'').replace(/</g,'&lt;')}</div>
+      </div>
+      <button class="redit" data-idx="${idx}">Modifica</button>
+    </div>`;
+  }).join('');
+  const html = `
+    <div class="card-panel center-screen">
+      <p class="eyebrow">Ultimo passo</p>
+      <h2 class="question">Rivedi le tue risposte</h2>
+      <p class="hint" style="margin:0 auto;">Controlla tutto, modifica quello che vuoi. Quando confermi, il team DC Academy riceve le risposte e ti ricontatta per i prossimi passi.</p>
+      <div class="recap-list">${rows}</div>
+      <button class="primary" id="confirmBtn" style="width:100%;">Confermo, è tutto corretto</button>
+    </div>
+  `;
+  renderShell(html);
+  document.querySelectorAll('.redit').forEach(btn => {
+    btn.onclick = () => editFromRecap(parseInt(btn.dataset.idx, 10));
+  });
+  document.getElementById('confirmBtn').onclick = submitFinal;
+}
+
+function submitFinal(){
+  const payload = {
+    timestamp: new Date().toISOString(),
+    cliente: CLIENT_NAME,
+    slug: CLIENT_SLUG,
+    email: GATE_EMAIL,
+    risposte_json: JSON.stringify(
+      ALL.reduce((acc, q) => {
+        const v = state.answers[q.id] !== undefined ? state.answers[q.id] : q.draft;
+        acc[q.id] = v || '';
+        return acc;
+      }, {})
+    ),
+  };
+  state.submitted = true;
+  saveLocal();
+  try {
+    fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }).catch(() => {});
+  } catch(e) {}
+  state.stage = 'thanks';
+  saveLocal();
+  renderAll();
+}
+
+function renderThanks(){
+  const html = `
+    <div class="card-panel center-screen">
+      <p class="eyebrow">Fatto</p>
+      <h2 class="question">Grazie, ${CLIENT_NAME.split(' ')[0]}</h2>
+      <p class="hint" style="margin:0 auto;">Abbiamo ricevuto tutto. Il team DC Academy ti ricontatta a breve per i prossimi passi.</p>
+    </div>
+  `;
+  renderShell(html);
+}
+
+function renderAll(){
+  if (state.stage === 'gate') { renderGate(); return; }
+  if (state.stage === 'intro') { renderIntro(); return; }
+  if (state.stage === 'recap') { renderRecap(); return; }
+  if (state.stage === 'thanks') { renderThanks(); return; }
+  renderQuestion();
+}
+
+loadLocal();
+renderAll();
+</script>
