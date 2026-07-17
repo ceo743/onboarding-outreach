@@ -1,0 +1,378 @@
+<title>Onboarding — Filippo Reggiani</title>
+<style>
+:root{
+  --paper:#eeece5;
+  --paper-raised:#f6f4ee;
+  --ink:#20221f;
+  --ink-soft:#54574f;
+  --line:#d8d4c8;
+  --accent:#2f5d50;
+  --accent-soft:#dde6e0;
+  --warn:#a85a2b;
+  --warn-soft:#f1e2d3;
+  --ok:#2f5d50;
+  --focus:#1c463a;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#15171a;
+    --paper-raised:#1c1f22;
+    --ink:#e9e7de;
+    --ink-soft:#9a9d94;
+    --line:#33362f;
+    --accent:#7fb3a1;
+    --accent-soft:#233229;
+    --warn:#d99a63;
+    --warn-soft:#3a2a1c;
+    --ok:#7fb3a1;
+    --focus:#a9d3c3;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#15171a; --paper-raised:#1c1f22; --ink:#e9e7de; --ink-soft:#9a9d94;
+  --line:#33362f; --accent:#7fb3a1; --accent-soft:#233229; --warn:#d99a63;
+  --warn-soft:#3a2a1c; --ok:#7fb3a1; --focus:#a9d3c3;
+}
+:root[data-theme="light"]{
+  --paper:#eeece5; --paper-raised:#f6f4ee; --ink:#20221f; --ink-soft:#54574f;
+  --line:#d8d4c8; --accent:#2f5d50; --accent-soft:#dde6e0; --warn:#a85a2b;
+  --warn-soft:#f1e2d3; --ok:#2f5d50; --focus:#1c463a;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:Charter,"Iowan Old Style","Palatino Linotype",Georgia,serif;
+  min-height:100vh;
+}
+.shell{
+  display:grid; grid-template-columns:280px 1fr; min-height:100vh;
+}
+@media (max-width:820px){ .shell{ grid-template-columns:1fr; } .rail{ display:none; } }
+
+.rail{
+  border-right:1px solid var(--line); padding:32px 24px; background:var(--paper-raised);
+  display:flex; flex-direction:column; gap:24px;
+}
+.rail h1{
+  font-size:15px; font-weight:600; letter-spacing:.02em; margin:0 0 4px;
+  font-family:ui-sans-serif,system-ui,sans-serif;
+}
+.rail .sub{ font-size:12.5px; color:var(--ink-soft); line-height:1.5; margin:0; }
+.rail .sections{ display:flex; flex-direction:column; gap:2px; margin-top:8px; }
+.rail .section-item{
+  font-family:ui-sans-serif,system-ui,sans-serif; font-size:12.5px;
+  padding:8px 10px; border-radius:6px; color:var(--ink-soft);
+  display:flex; justify-content:space-between; gap:8px; align-items:baseline;
+}
+.rail .section-item.active{ background:var(--accent-soft); color:var(--ink); font-weight:600; }
+.rail .section-item .n{ font-variant-numeric:tabular-nums; font-size:11px; opacity:.7; }
+
+.main{ display:flex; flex-direction:column; min-height:100vh; }
+
+.topbar{
+  padding:20px 40px 0; display:flex; flex-direction:column; gap:10px;
+}
+.progress-line{ height:3px; background:var(--line); border-radius:2px; overflow:hidden; }
+.progress-fill{ height:100%; background:var(--accent); border-radius:2px; transition:width .35s ease; width:0%; }
+.progress-meta{
+  display:flex; justify-content:space-between; font-family:ui-sans-serif,system-ui,sans-serif;
+  font-size:12px; color:var(--ink-soft); font-variant-numeric:tabular-nums;
+}
+.progress-meta b{ color:var(--ink); }
+
+.stage{
+  flex:1; display:flex; align-items:center; justify-content:center; padding:24px 40px 60px;
+}
+.card{ width:100%; max-width:600px; }
+
+.eyebrow{
+  font-family:ui-sans-serif,system-ui,sans-serif; font-size:11.5px; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--ink-soft); margin:0 0 14px;
+}
+.question{
+  font-size:28px; line-height:1.28; margin:0 0 20px; text-wrap:balance; font-weight:500;
+}
+.hint{ font-size:14.5px; color:var(--ink-soft); margin:-8px 0 20px; line-height:1.5; max-width:52ch; }
+
+.status-chip{
+  display:inline-flex; align-items:center; gap:6px; font-family:ui-sans-serif,system-ui,sans-serif;
+  font-size:11.5px; padding:4px 10px; border-radius:100px; margin-bottom:16px;
+  font-weight:600; letter-spacing:.01em;
+}
+.status-chip.draft{ background:var(--accent-soft); color:var(--accent); }
+.status-chip.missing{ background:var(--warn-soft); color:var(--warn); }
+.status-chip.confirmed{ background:var(--accent-soft); color:var(--accent); }
+.status-chip::before{ content:"●"; font-size:8px; }
+
+textarea{
+  width:100%; min-height:120px; padding:16px 18px; font-size:16px; line-height:1.55;
+  font-family:Charter,"Iowan Old Style",Georgia,serif; color:var(--ink);
+  background:var(--paper-raised); border:1px solid var(--line); border-radius:10px;
+  resize:vertical; outline:none;
+}
+textarea:focus{ border-color:var(--focus); box-shadow:0 0 0 3px var(--accent-soft); }
+textarea::placeholder{ color:var(--ink-soft); font-family:ui-sans-serif,system-ui,sans-serif; font-size:14px; }
+
+.critical-note{
+  display:flex; gap:10px; align-items:flex-start; margin-top:12px; padding:12px 14px;
+  background:var(--warn-soft); border-radius:8px; font-family:ui-sans-serif,system-ui,sans-serif;
+  font-size:13px; color:var(--warn); line-height:1.5;
+}
+
+.actions{
+  display:flex; justify-content:space-between; align-items:center; margin-top:28px;
+  font-family:ui-sans-serif,system-ui,sans-serif;
+}
+.actions .left{ display:flex; gap:10px; }
+button{
+  font-family:ui-sans-serif,system-ui,sans-serif; font-size:14px; font-weight:600;
+  padding:11px 20px; border-radius:8px; border:1px solid transparent; cursor:pointer;
+  transition:opacity .15s ease;
+}
+button:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+button.primary{ background:var(--accent); color:var(--paper); }
+button.primary:hover{ opacity:.9; }
+button.ghost{ background:transparent; color:var(--ink-soft); border-color:var(--line); }
+button.ghost:hover{ color:var(--ink); border-color:var(--ink-soft); }
+button.text{ background:transparent; color:var(--ink-soft); padding:11px 6px; }
+button.text:hover{ color:var(--ink); text-decoration:underline; }
+
+.done-screen{ text-align:center; }
+.done-screen .question{ font-size:26px; }
+.recap{
+  text-align:left; background:var(--paper-raised); border:1px solid var(--line); border-radius:10px;
+  padding:18px 20px; margin:20px 0; max-height:280px; overflow-y:auto; font-size:13.5px;
+  font-family:ui-sans-serif,system-ui,sans-serif; line-height:1.6;
+}
+.recap .row{ display:flex; justify-content:space-between; gap:12px; padding:6px 0; border-bottom:1px solid var(--line); }
+.recap .row:last-child{ border-bottom:none; }
+.recap .row .k{ color:var(--ink-soft); flex:0 0 auto; }
+.recap .row .v{ text-align:right; color:var(--ink); }
+.recap .row.skip .v{ color:var(--warn); font-style:italic; }
+
+.activation input, .gate input{
+  width:100%; padding:14px 16px; font-size:15px; margin-bottom:12px;
+  font-family:ui-sans-serif,system-ui,sans-serif; color:var(--ink);
+  background:var(--paper-raised); border:1px solid var(--line); border-radius:8px; outline:none;
+}
+.activation input:focus, .gate input:focus{ border-color:var(--focus); box-shadow:0 0 0 3px var(--accent-soft); }
+
+.gate-screen{ text-align:center; }
+.gate-error{ color:var(--warn); font-family:ui-sans-serif,system-ui,sans-serif; font-size:13.5px; margin:-4px 0 14px; min-height:1.2em; }
+
+@media (prefers-reduced-motion:reduce){ *{ transition:none !important; } }
+</style>
+
+<div id="app"></div>
+
+<script>
+const CLIENT_NAME = "Filippo Reggiani";
+const GATE_EMAIL = "f.reggiani@rsi-solutions.it";
+
+const SECTIONS = [
+  { title: "Anagrafica", questions: [
+    { id:"anag_nome", text:"Nome", draft:"Filippo" },
+    { id:"anag_cognome", text:"Cognome", draft:"Reggiani" },
+    { id:"anag_cellulare", text:"Cellulare", draft:"" },
+    { id:"anag_email", text:"Email", draft:"f.reggiani@rsi-solutions.it" },
+  ]},
+  { title: "Storia e informazioni generali", questions: [
+    { id:"storia_nascita", text:"Da quanto siete nati? Raccontateci una veloce panoramica della vostra storia.", draft:"Filippo racconta anni di esperienza tra multinazionali, start-up innovative e consigli di amministrazione, prima di dedicarsi alle PMI con RSI Ricerca Sostenibilità Integrata (fonte: LinkedIn). La data di nascita esatta dell'azienda non emerge dalle fonti." },
+    { id:"storia_eventi", text:"Che eventi rilevanti vi hanno portato dove siete ora? Sviluppo prodotti, contratti importanti, fusioni, acquisizioni.", draft:"Riorganizzazione aziendale recente con ingresso di una nuova squadra e un progetto di rilancio della comunicazione e del business (fonte: trascrizione prima call, 25/07/2025)." },
+    { id:"storia_strategia", text:"Qual è la vostra strategia di crescita? Su quali punti si basa il piano industriale?", draft:"Puntare su LinkedIn come leva principale per costruire consapevolezza di brand, con un focus su un target sostenibile e una crescita graduale e realistica, non aggressiva (fonte: trascrizione)." },
+  ]},
+  { title: "Target e mercato", questions: [
+    { id:"mercato_settore", text:"In che settore opera l'attività?", draft:"Finanza agevolata (bandi a fondo perduto nazionali e regionali), controllo di gestione operativo e rating ESG / sostenibilità per PMI (fonte: trascrizione + LinkedIn)." },
+    { id:"mercato_target", text:"Chi è il vostro target cliente? Descrivete l'avatar: ruolo, tipo di azienda, dipendenti, fatturato.", draft:"PMI del Nord Italia (dalla Toscana in su, inclusa Emilia Romagna), 10-50 dipendenti, focus iniziale sul settore ospitalità (hotel 3-4 stelle). Risultati citati anche in manifatturiero, logistica e industria (fonte: trascrizione + LinkedIn)." },
+    { id:"mercato_clienti_attuali", text:"Chi sono i vostri clienti attuali? Se possibile, indicateci delle referenze.", draft:"", critical:true, criticalNote:"Non emergono nomi di clienti specifici dalle fonti disponibili (trascrizione e LinkedIn) — chiediamo a Filippo di indicarne almeno alcuni, servono anche per non richiamarli per errore in outreach." },
+    { id:"mercato_problemi", text:"Quali problemi dei vostri clienti risolvete?", draft:"Le PMI faticano a crescere senza disperdere risorse: mancano strumenti per misurare le performance, competenze strategiche di guida e conoscenza degli strumenti pubblici (bandi, contributi a fondo perduto). La sostenibilità, se non strutturata, resta spesso una parola vuota senza impatto reale sul business (fonte: LinkedIn, sezione Informazioni)." },
+    { id:"mercato_esclusioni", text:"Ci sono clienti o aziende con cui non potete lavorare? (concorrenti, conflitti, categorie da evitare)", draft:"", critical:true, criticalNote:"Questo campo non lo deduciamo mai da soli — decide chi non contattiamo mai. Se lo lasci vuoto, per noi vuol dire nessuna esclusione oltre ai concorrenti diretti." },
+    { id:"mercato_eventi_settore", text:"Ci sono eventi o novità nel vostro settore che possono influenzare il business, in positivo o negativo?", draft:"Il Pacchetto Omnibus (febbraio 2026) ha ridotto l'obbligo di rendicontazione CSRD alle sole imprese sopra 1.000 dipendenti e 450 milioni di fatturato, escludendo quasi tutte le PMI dall'obbligo formale — ma la richiesta di dati ESG da banche, filiera e gare resta e cresce. Diverse finestre di bandi si aprono nel 2026 (Fondo Turismo Green Tour, Nuova Sabatini, Iperammortamento, SIMEST) (fonte: LinkedIn, post recenti)." },
+  ]},
+  { title: "Offerta e soluzioni", questions: [
+    { id:"offerta_servizi", text:"Che servizi o prodotti offrite?", draft:"Tre leve integrate: controllo di gestione operativo (specializzazione hospitality), finanza agevolata (bandi a fondo perduto nazionali e regionali) e rating ESG con progetti di sostenibilità (fonte: LinkedIn)." },
+    { id:"offerta_priorita", text:"C'è un servizio o prodotto che ritenete più opportuno promuovere in questa collaborazione?", draft:"Il nuovo servizio che traduce la sostenibilità in ricavi concreti per le PMI, presentato come interesse specifico durante la prima call (fonte: trascrizione)." },
+    { id:"offerta_come_funziona", text:"Come funzionano le vostre soluzioni, in pratica?", draft:"Prima si analizza la fattibilità: bilanci, indicatori economico-finanziari, Registro Nazionale degli Aiuti di Stato, investimenti previsti. Da lì si individua lo strumento più adatto (fondo perduto, credito d'imposta o finanziamento agevolato) in base a indebitamento e capacità di rimborso dell'azienda (fonte: LinkedIn, post)." },
+    { id:"offerta_casi", text:"Ci fareste qualche esempio concreto di progetti seguiti con clienti referenziabili?", draft:"", criticalNote:"" },
+    { id:"offerta_risultato", text:"Qual è il risultato desiderato che vendete?", draft:"Maggiore produttività, accesso concreto ai fondi pubblici, risparmio, impatto diretto sull'EBITDA (fonte: trascrizione + LinkedIn)." },
+    { id:"offerta_tempo", text:"In quanto tempo, in media, il cliente ottiene quel risultato?", draft:"" },
+    { id:"offerta_effort", text:"Che effort o sacrifici deve affrontare il cliente per raggiungere il risultato?", draft:"" },
+    { id:"offerta_novita", text:"Ci sono soluzioni che avete in programma di aggiungere o aggiornare nel catalogo?", draft:"Servizio di traduzione sostenibilità→ricavi in fase di lancio; esperienze ESG \"outdoor\" per formare e coinvolgere i team aziendali sui principi ESG (fonte: trascrizione + LinkedIn)." },
+  ]},
+  { title: "Competizione e posizionamento", questions: [
+    { id:"comp_diretti", text:"Quali sono i vostri competitor diretti?", draft:"", critical:true, criticalNote:"Campo di sicurezza: questi nomi non li contatteremo mai. Non emergono dalle fonti disponibili — se ne conosci anche solo uno o due, scrivili qui." },
+    { id:"comp_bigplayer", text:"Quali sono i \"big player\" nel vostro settore?", draft:"" },
+    { id:"comp_differenzianti", text:"Che fattori differenzianti ha la vostra azienda rispetto ai competitor?", draft:"Impatto diretto sull'EBITDA dei progetti, conoscenza specifica dei punti critici delle PMI (soprattutto nel turismo), strumenti agili e su misura, percorso misurabile e orientato ai risultati, integrazione in un'unica visione di controllo di gestione + finanza agevolata + sostenibilità (fonte: LinkedIn, sezione Informazioni)." },
+    { id:"comp_risposta_esigenze", text:"Come rispondete meglio della concorrenza alle esigenze dei clienti?", draft:"" },
+    { id:"comp_referenze", text:"Che referenze in più avete rispetto alla concorrenza?", draft:"" },
+    { id:"comp_specializzazioni", text:"Avete specializzazioni particolari?", draft:"Hospitality (hotel 3-4 stelle); esperienze ESG \"outdoor\" per la formazione dei team (fonte: trascrizione + LinkedIn)." },
+    { id:"comp_credibilita", text:"Che elementi di credibilità possiamo usare? Pubblicazioni, referenze di clienti significative.", draft:"Autore del libro \"Il Frigo\"; tre newsletter LinkedIn attive (\"Bandi a Fondo Perduto per PMI\", 2.160 iscritti; \"Strategie ESG per PMI\", 1.559 iscritti; \"Per Essere\", 966 iscritti); 9.163 follower su LinkedIn (fonte: LinkedIn)." },
+    { id:"comp_leve", text:"Quali leve usate in marketing o vendita per convertire il cliente?", draft:"Campagne mirate su bandi/incentivi specifici verso target definiti (es. digital officer, marketing manager hotel); automazione per la lead generation; newsletter con ampia base di iscritti come canale aggiuntivo (fonte: trascrizione)." },
+  ]},
+  { title: "Marketing e attività commerciale", questions: [
+    { id:"mkt_acquisizione", text:"Come avete acquisito i vostri clienti finora?", draft:"" },
+    { id:"mkt_canali", text:"Quali canali di marketing avete usato per acquisirli?", draft:"LinkedIn (post organici e newsletter). Il sito web è considerato obsoleto e non viene usato come canale principale di comunicazione (fonte: trascrizione)." },
+    { id:"mkt_non_funzionato", text:"Cosa avete provato in passato che non ha funzionato?", draft:"" },
+    { id:"mkt_canali_futuri", text:"Ci sono canali che ritenete interessanti e non avete ancora usato?", draft:"" },
+    { id:"mkt_investimento", text:"State investendo in marketing in questo momento? Avete mai investito?", draft:"" },
+    { id:"mkt_tempo_lead", text:"Quanto tempo passa, in media, da quando un lead entra nel processo di vendita a quando diventa cliente?", draft:"" },
+  ]},
+];
+
+const ALL = [];
+SECTIONS.forEach((s, si) => s.questions.forEach((q) => ALL.push({ ...q, sectionIndex: si, sectionTitle: s.title })));
+
+const state = { i: 0, answers: {}, skipped: {}, unlocked: false };
+let done = false;
+
+function renderGate(){
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="shell" style="grid-template-columns:1fr;">
+      <div class="main">
+        <div class="stage">
+          <div class="card gate-screen">
+            <p class="eyebrow">Onboarding ${CLIENT_NAME}</p>
+            <h2 class="question">Inserisci la tua email per iniziare</h2>
+            <p class="hint" style="margin:0 auto 20px;">Ti serve per accedere alle domande che abbiamo preparato per te.</p>
+            <input type="email" placeholder="La tua email" id="gateEmail" style="max-width:380px;margin:0 auto 4px;display:block;" />
+            <p class="gate-error" id="gateError"></p>
+            <button class="primary" id="gateBtn">Continua</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  const check = () => {
+    const val = document.getElementById('gateEmail').value.trim().toLowerCase();
+    if (val === GATE_EMAIL.toLowerCase()) {
+      state.unlocked = true;
+      renderAll();
+    } else {
+      document.getElementById('gateError').textContent = 'Email non riconosciuta. Riprova.';
+    }
+  };
+  document.getElementById('gateBtn').onclick = check;
+  document.getElementById('gateEmail').addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+}
+
+function renderShell(){
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="shell">
+      <aside class="rail">
+        <div>
+          <h1>Onboarding — ${CLIENT_NAME}</h1>
+          <p class="sub">Le risposte con il pallino verde sono bozze scritte da noi da LinkedIn e dalla trascrizione della prima call. Confermale, correggile, o saltale.</p>
+        </div>
+        <div class="sections" id="railSections"></div>
+      </aside>
+      <div class="main">
+        <div class="topbar">
+          <div class="progress-line"><div class="progress-fill" id="progressFill"></div></div>
+          <div class="progress-meta">
+            <span id="progressLabel">Domanda 1 di ${ALL.length}</span>
+            <span id="progressPct"><b>0%</b> completato</span>
+          </div>
+        </div>
+        <div class="stage"><div class="card" id="card"></div></div>
+      </div>
+    </div>
+  `;
+}
+
+function renderRail(){
+  const el = document.getElementById('railSections');
+  el.innerHTML = '';
+  SECTIONS.forEach((s, si) => {
+    const answeredInSection = s.questions.filter(q => state.answers[q.id] !== undefined).length;
+    const div = document.createElement('div');
+    div.className = 'section-item' + (!done && ALL[state.i].sectionIndex === si ? ' active' : '');
+    div.innerHTML = `<span>${s.title}</span><span class="n">${answeredInSection}/${s.questions.length}</span>`;
+    el.appendChild(div);
+  });
+}
+
+function renderProgress(){
+  const total = ALL.length;
+  const completed = Object.keys(state.answers).length;
+  document.getElementById('progressFill').style.width = (done ? 100 : Math.round((state.i / total) * 100)) + '%';
+  document.getElementById('progressLabel').textContent = done ? 'Completato' : `Domanda ${state.i + 1} di ${total}`;
+  document.getElementById('progressPct').innerHTML = `<b>${Math.round((completed/total)*100)}%</b> risposto`;
+}
+
+function statusChip(q){
+  if (state.answers[q.id] !== undefined) {
+    if (state.skipped[q.id]) return `<span class="status-chip missing">Saltata</span>`;
+    return `<span class="status-chip confirmed">Confermata</span>`;
+  }
+  if (q.draft) return `<span class="status-chip draft">Bozza nostra da verificare</span>`;
+  return `<span class="status-chip missing">Da compilare</span>`;
+}
+
+function renderQuestion(){
+  const q = ALL[state.i];
+  const card = document.getElementById('card');
+  const existing = state.answers[q.id];
+  const value = existing !== undefined ? existing : q.draft;
+  card.innerHTML = `
+    <p class="eyebrow">${q.sectionTitle}</p>
+    ${statusChip(q)}
+    <h2 class="question">${q.text}</h2>
+    <textarea id="answerBox" placeholder="Scrivi qui la risposta...">${value || ''}</textarea>
+    ${q.critical ? `<div class="critical-note">⚠ ${q.criticalNote}</div>` : ''}
+    <div class="actions">
+      <div class="left">
+        ${state.i > 0 ? `<button class="ghost" id="backBtn">Torna indietro</button>` : ''}
+        <button class="text" id="skipBtn">Salta questa domanda</button>
+      </div>
+      <button class="primary" id="nextBtn">${state.i === ALL.length - 1 ? 'Conferma e concludi' : 'Conferma e continua'}</button>
+    </div>
+  `;
+  document.getElementById('nextBtn').onclick = () => {
+    const val = document.getElementById('answerBox').value.trim();
+    state.answers[q.id] = val;
+    state.skipped[q.id] = val === '';
+    advance();
+  };
+  document.getElementById('skipBtn').onclick = () => {
+    state.answers[q.id] = '';
+    state.skipped[q.id] = true;
+    advance();
+  };
+  const backBtn = document.getElementById('backBtn');
+  if (backBtn) backBtn.onclick = () => { state.i--; renderAll(); };
+}
+
+function advance(){
+  if (state.i < ALL.length - 1) { state.i++; renderAll(); }
+  else { done = true; renderDone(); }
+}
+
+function renderDone(){
+  const card = document.getElementById('card');
+  const rows = ALL.map(q => {
+    const v = state.answers[q.id] || '';
+    const skip = state.skipped[q.id];
+    return `<div class="row ${skip ? 'skip' : ''}"><span class="k">${q.text.length > 46 ? q.text.slice(0,46)+'…' : q.text}</span><span class="v">${skip ? 'saltata' : (v.length > 40 ? v.slice(0,40)+'…' : v)}</span></div>`;
+  }).join('');
+  card.innerHTML = `
+    <div class="done-screen">
+      <p class="eyebrow">Ultimo passo</p>
+      <h2 class="question">Grazie, ${CLIENT_NAME.split(' ')[0]}</h2>
+      <p class="hint" style="margin:0 auto 20px;">Rivedi in breve quello che hai compilato. Il team DC Academy riceve tutto e ti ricontatta per i prossimi passi.</p>
+      <div class="recap">${rows}</div>
+    </div>
+  `;
+}
+
+function renderAll(){
+  if (!state.unlocked) { renderGate(); return; }
+  renderShell();
+  renderRail();
+  renderProgress();
+  if (done) renderDone(); else renderQuestion();
+}
+
+renderAll();
+</script>
