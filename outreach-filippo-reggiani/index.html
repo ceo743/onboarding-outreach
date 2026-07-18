@@ -545,4 +545,12 @@ function renderAll(){
 
 loadLocal();
 renderAll();
+
+window.addEventListener('storage', (ev) => {
+  if (ev.key !== STORAGE_KEY || !ev.newValue) return;
+  const activeIsTextarea = document.activeElement && document.activeElement.id === 'answerBox';
+  if (activeIsTextarea) return;
+  loadLocal();
+  renderAll();
+});
 </script>
