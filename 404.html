@@ -321,8 +321,33 @@ function renderShell(innerHtml){
     const isActive = state.stage === 'question' && ALL[state.i] && ALL[state.i].sectionIndex === si;
     div.className = 'section-item' + (isActive ? ' active' : '');
     div.innerHTML = `<span>${s.title}</span><span class="n">${answeredInSection}/${s.questions.length}</span>`;
+    div.style.cursor = 'pointer';
+    div.onclick = () => {
+      state.i = ALL.findIndex(q => q.sectionIndex === si);
+      state.returnToRecap = false;
+      state.stage = 'question';
+      saveLocal();
+      renderAll();
+    };
     el.appendChild(div);
   });
+  if (state.stage !== 'gate' && state.stage !== 'intro') {
+    const recapDiv = document.createElement('div');
+    const recapActive = state.stage === 'recap' || state.stage === 'thanks';
+    recapDiv.className = 'section-item' + (recapActive ? ' active' : '');
+    recapDiv.style.cursor = 'pointer';
+    recapDiv.style.marginTop = '10px';
+    recapDiv.style.borderTop = '1px solid var(--line)';
+    recapDiv.style.paddingTop = '18px';
+    recapDiv.innerHTML = `<span>Riepilogo</span>`;
+    recapDiv.onclick = () => {
+      state.stage = state.submitted ? 'thanks' : 'recap';
+      state.returnToRecap = false;
+      saveLocal();
+      renderAll();
+    };
+    el.appendChild(recapDiv);
+  }
 }
 
 function statusChip(q){
