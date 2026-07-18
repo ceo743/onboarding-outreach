@@ -230,6 +230,32 @@ let state = { stage:'gate', i:0, answers:{}, skipped:{}, returnToRecap:false, su
 
 function saveLocal(){
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
+  syncRemote();
+}
+
+function syncRemote(){
+  if (state.stage === 'gate' || state.stage === 'intro') return;
+  try {
+    const payload = {
+      timestamp: new Date().toISOString(),
+      cliente: CLIENT_NAME,
+      slug: CLIENT_SLUG,
+      email: GATE_EMAIL,
+      stato: state.submitted ? 'completato' : 'in_corso',
+      risposte_json: JSON.stringify(
+        ALL.reduce((acc, q) => {
+          const v = state.answers[q.id] !== undefined ? state.answers[q.id] : q.draft;
+          acc[q.id] = v || '';
+          return acc;
+        }, {})
+      ),
+    };
+    fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }).catch(() => {});
+  } catch(e) {}
 }
 function loadLocal(){
   try {
@@ -449,28 +475,7 @@ function renderRecap(){
 }
 
 function submitFinal(){
-  const payload = {
-    timestamp: new Date().toISOString(),
-    cliente: CLIENT_NAME,
-    slug: CLIENT_SLUG,
-    email: GATE_EMAIL,
-    risposte_json: JSON.stringify(
-      ALL.reduce((acc, q) => {
-        const v = state.answers[q.id] !== undefined ? state.answers[q.id] : q.draft;
-        acc[q.id] = v || '';
-        return acc;
-      }, {})
-    ),
-  };
   state.submitted = true;
-  saveLocal();
-  try {
-    fetch(WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    }).catch(() => {});
-  } catch(e) {}
   state.stage = 'thanks';
   saveLocal();
   renderAll();
