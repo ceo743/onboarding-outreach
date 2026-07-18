@@ -455,16 +455,14 @@ function renderThanks(){
     <div class="card-panel center-screen">
       <p class="eyebrow">Fatto</p>
       <h2 class="question">Grazie, ${CLIENT_NAME.split(' ')[0]}</h2>
-      <p class="hint" style="margin:0 auto;">Abbiamo ricevuto tutto. Il team DC Academy ti ricontatta a breve per i prossimi passi. Le tue risposte restano visibili qui sotto: puoi ancora modificarle, verranno reinviate.</p>
+      <p class="hint" style="margin:0 auto;">Abbiamo ricevuto tutto. Il team DC Academy ti ricontatta a breve per i prossimi passi. Le tue risposte restano visibili qui sotto: puoi ancora modificarle.</p>
       <div class="recap-list" style="text-align:left;">${rows}</div>
-      <button class="primary" id="confirmBtn" style="width:100%;">Salva le modifiche</button>
     </div>
   `;
   renderShell(html);
   document.querySelectorAll('.redit').forEach(btn => {
     btn.onclick = () => editFromRecap(parseInt(btn.dataset.idx, 10));
   });
-  document.getElementById('confirmBtn').onclick = submitFinal;
 }
 
 function renderAll(){
