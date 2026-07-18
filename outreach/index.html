@@ -289,7 +289,9 @@ function pullFirestore(){
     if (!remote.stato_json) return;
     const remoteState = JSON.parse(remote.stato_json);
     if ((remoteState.updatedAt || 0) > (state.updatedAt || 0)) {
+      const localStage = state.stage;
       state = Object.assign(state, remoteState);
+      if (localStage === 'gate' || localStage === 'intro') state.stage = localStage;
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
       renderAll();
     }
@@ -306,7 +308,9 @@ function watchFirestore(){
     if (!remote.stato_json) return;
     const remoteState = JSON.parse(remote.stato_json);
     if ((remoteState.updatedAt || 0) > (state.updatedAt || 0)) {
+      const localStage = state.stage;
       state = Object.assign(state, remoteState);
+      if (localStage === 'gate' || localStage === 'intro') state.stage = localStage;
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
       renderAll();
     }
