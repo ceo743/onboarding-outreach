@@ -187,7 +187,22 @@ button.text:hover{ color:var(--ink); text-decoration:underline; }
 
 <div id="app"></div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyA9xblm9cvKgb6SOKU0PnmVq2sx7MqjsUA",
+  authDomain: "dc-outreach-dashboard.firebaseapp.com",
+  projectId: "dc-outreach-dashboard",
+  storageBucket: "dc-outreach-dashboard.firebasestorage.app",
+  messagingSenderId: "854249722380",
+  appId: "1:854249722380:web:3002aac7e7620ac441d429"
+};
+let fbDb = null;
+try {
+  firebase.initializeApp(FIREBASE_CONFIG);
+  fbDb = firebase.firestore();
+} catch(e) {}
 /* TEMPLATE · per un nuovo cliente: cambia questi 4 valori, popola i draft nelle SECTIONS
    (prima persona, senza "(fonte:...)"), aggiorna il webhook se serve un hook dedicato. */
 const CLIENT_NAME = "[NOME CLIENTE]";
@@ -246,8 +261,56 @@ SECTIONS.forEach((s, si) => s.questions.forEach((q) => ALL.push({ ...q, sectionI
 let state = { stage:'gate', i:0, answers:{}, skipped:{}, returnToRecap:false, submitted:false };
 
 function saveLocal(){
+  state.updatedAt = Date.now();
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
   syncRemote();
+  pushFirestore();
+}
+
+function pushFirestore(){
+  if (!fbDb) return;
+  if (state.stage === 'gate' || state.stage === 'intro') return;
+  try {
+    fbDb.collection('onboarding_wizard').doc(CLIENT_SLUG).set({
+      cliente: CLIENT_NAME,
+      slug: CLIENT_SLUG,
+      stato_json: JSON.stringify(state),
+      updatedAt: state.updatedAt,
+    }, { merge: true }).catch(() => {});
+  } catch(e) {}
+}
+
+let applyingRemote = false;
+function pullFirestore(){
+  if (!fbDb) return Promise.resolve();
+  return fbDb.collection('onboarding_wizard').doc(CLIENT_SLUG).get().then((snap) => {
+    if (!snap.exists) return;
+    const remote = snap.data();
+    if (!remote.stato_json) return;
+    const remoteState = JSON.parse(remote.stato_json);
+    if ((remoteState.updatedAt || 0) > (state.updatedAt || 0)) {
+      state = Object.assign(state, remoteState);
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
+      renderAll();
+    }
+  }).catch(() => {});
+}
+
+function watchFirestore(){
+  if (!fbDb) return;
+  fbDb.collection('onboarding_wizard').doc(CLIENT_SLUG).onSnapshot((snap) => {
+    if (!snap.exists) return;
+    const activeIsTextarea = document.activeElement && document.activeElement.id === 'answerBox';
+    if (activeIsTextarea) return;
+    const remote = snap.data();
+    if (!remote.stato_json) return;
+    const remoteState = JSON.parse(remote.stato_json);
+    if ((remoteState.updatedAt || 0) > (state.updatedAt || 0)) {
+      state = Object.assign(state, remoteState);
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
+      renderAll();
+    }
+  }, () => {});
 }
 
 function syncRemote(){
@@ -547,6 +610,7 @@ function renderAll(){
 
 loadLocal();
 renderAll();
+pullFirestore().then(() => { watchFirestore(); });
 
 window.addEventListener('storage', (ev) => {
   if (ev.key !== STORAGE_KEY || !ev.newValue) return;
