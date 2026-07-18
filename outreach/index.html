@@ -1,6 +1,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Onboarding Cliente — Template</title>
+<title>Onboarding Cliente · Template</title>
 <style>
 :root{
   --paper:#eeece5;
@@ -55,19 +55,19 @@ body{
   border-right:1px solid var(--line); padding:32px 24px; background:var(--paper-raised);
   display:flex; flex-direction:column; gap:24px;
 }
-.rail h1{ font-size:17px; font-weight:600; letter-spacing:.02em; margin:0 0 4px; font-family:ui-sans-serif,system-ui,sans-serif; }
-.rail .sub{ font-size:14.5px; color:var(--ink-soft); line-height:1.5; margin:0; }
+.rail h1{ font-size:20px; font-weight:600; letter-spacing:.02em; margin:0 0 4px; font-family:ui-sans-serif,system-ui,sans-serif; }
+.rail .sub{ font-size:16px; color:var(--ink-soft); line-height:1.5; margin:0; }
 .rail .sections{ display:flex; flex-direction:column; gap:2px; margin-top:8px; }
 .rail .section-item{
-  font-family:ui-sans-serif,system-ui,sans-serif; font-size:14.5px;
+  font-family:ui-sans-serif,system-ui,sans-serif; font-size:16.5px;
   padding:9px 11px; border-radius:7px; color:var(--ink-soft);
   display:flex; justify-content:space-between; gap:8px; align-items:baseline;
 }
 .rail .section-item.active{ background:var(--accent-soft); color:var(--ink); font-weight:600; }
-.rail .section-item .n{ font-variant-numeric:tabular-nums; font-size:13px; opacity:.7; }
+.rail .section-item .n{ font-variant-numeric:tabular-nums; font-size:15px; opacity:.7; }
 .rail .section-sub{ display:flex; flex-direction:column; gap:1px; margin:2px 0 6px 11px; padding-left:10px; border-left:1px solid var(--line); }
 .rail .section-subitem{
-  font-family:ui-sans-serif,system-ui,sans-serif; font-size:13px; color:var(--ink-soft);
+  font-family:ui-sans-serif,system-ui,sans-serif; font-size:15px; color:var(--ink-soft);
   padding:7px 9px; border-radius:6px; display:flex; align-items:center; gap:7px; cursor:pointer;
   line-height:1.3;
 }
@@ -83,7 +83,7 @@ body{
 .progress-fill{ height:100%; background:var(--accent); border-radius:3px; transition:width .35s ease; width:0%; }
 .progress-meta{
   display:flex; justify-content:space-between; font-family:ui-sans-serif,system-ui,sans-serif;
-  font-size:14px; color:var(--ink-soft); font-variant-numeric:tabular-nums;
+  font-size:16px; color:var(--ink-soft); font-variant-numeric:tabular-nums;
 }
 .progress-meta b{ color:var(--ink); }
 
@@ -177,12 +177,18 @@ button.text:hover{ color:var(--ink); text-decoration:underline; }
 .modal-panel .hint{ margin:0 auto 22px; }
 
 @media (prefers-reduced-motion:reduce){ *{ transition:none !important; } }
+
+.footer-privacy{
+  font-family:ui-sans-serif,system-ui,sans-serif; font-size:12.5px; color:var(--ink-soft);
+  line-height:1.5; padding:20px 24px; border-top:1px solid var(--line); margin-top:auto;
+}
+.footer-privacy a{ color:var(--ink-soft); }
 </style>
 
 <div id="app"></div>
 
 <script>
-/* TEMPLATE — per un nuovo cliente: cambia questi 4 valori, popola i draft nelle SECTIONS
+/* TEMPLATE · per un nuovo cliente: cambia questi 4 valori, popola i draft nelle SECTIONS
    (prima persona, senza "(fonte:...)"), aggiorna il webhook se serve un hook dedicato. */
 const CLIENT_NAME = "[NOME CLIENTE]";
 const CLIENT_SLUG = "[slug-cliente]";
@@ -333,10 +339,11 @@ function renderShell(innerHtml){
     <div class="shell">
       <aside class="rail">
         <div>
-          <h1>Onboarding — ${CLIENT_NAME}</h1>
+          <h1>Onboarding · ${CLIENT_NAME}</h1>
           <p class="sub">Le risposte con il pallino verde sono bozze scritte da noi da LinkedIn e dalla trascrizione della prima call. Confermale, correggile, o saltale.</p>
         </div>
         <div class="sections" id="railSections"></div>
+        <p class="footer-privacy">I tuoi dati restano riservati: li usiamo solo per preparare la strategia di posizionamento e outreach con il team DC Academy, non vengono condivisi con terzi.</p>
       </aside>
       <div class="main">
         ${showProgress ? `
