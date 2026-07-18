@@ -65,6 +65,17 @@ body{
 }
 .rail .section-item.active{ background:var(--accent-soft); color:var(--ink); font-weight:600; }
 .rail .section-item .n{ font-variant-numeric:tabular-nums; font-size:13px; opacity:.7; }
+.rail .section-sub{ display:flex; flex-direction:column; gap:1px; margin:2px 0 6px 11px; padding-left:10px; border-left:1px solid var(--line); }
+.rail .section-subitem{
+  font-family:ui-sans-serif,system-ui,sans-serif; font-size:13px; color:var(--ink-soft);
+  padding:7px 9px; border-radius:6px; display:flex; align-items:center; gap:7px; cursor:pointer;
+  line-height:1.3;
+}
+.rail .section-subitem:hover{ background:var(--accent-soft); }
+.rail .section-subitem.current{ color:var(--ink); font-weight:600; }
+.rail .section-subitem .dot{ width:6px; height:6px; border-radius:50%; flex:none; background:var(--line); }
+.rail .section-subitem.done .dot{ background:var(--accent); }
+.rail .section-subitem.skip .dot{ background:var(--warn); }
 
 .main{ display:flex; flex-direction:column; min-height:100vh; }
 .topbar{ padding:24px 40px 0; display:flex; flex-direction:column; gap:10px; }
@@ -343,8 +354,8 @@ function renderShell(innerHtml){
   const el = document.getElementById('railSections');
   SECTIONS.forEach((s, si) => {
     const answeredInSection = s.questions.filter(q => state.answers[q.id] !== undefined).length;
-    const div = document.createElement('div');
     const isActive = state.stage === 'question' && ALL[state.i] && ALL[state.i].sectionIndex === si;
+    const div = document.createElement('div');
     div.className = 'section-item' + (isActive ? ' active' : '');
     div.innerHTML = `<span>${s.title}</span><span class="n">${answeredInSection}/${s.questions.length}</span>`;
     div.style.cursor = 'pointer';
@@ -356,6 +367,28 @@ function renderShell(innerHtml){
       renderAll();
     };
     el.appendChild(div);
+    if (isActive) {
+      const sub = document.createElement('div');
+      sub.className = 'section-sub';
+      s.questions.forEach((q) => {
+        const globalIdx = ALL.findIndex(aq => aq.id === q.id);
+        const answered = state.answers[q.id] !== undefined;
+        const skipped = answered && state.skipped[q.id];
+        const row = document.createElement('div');
+        row.className = 'section-subitem' + (globalIdx === state.i ? ' current' : '') + (answered && !skipped ? ' done' : '') + (skipped ? ' skip' : '');
+        row.innerHTML = `<span class="dot"></span><span>${q.text}</span>`;
+        row.onclick = (ev) => {
+          ev.stopPropagation();
+          state.i = globalIdx;
+          state.returnToRecap = false;
+          state.stage = 'question';
+          saveLocal();
+          renderAll();
+        };
+        sub.appendChild(row);
+      });
+      el.appendChild(sub);
+    }
   });
   if (state.stage !== 'gate' && state.stage !== 'intro') {
     const recapDiv = document.createElement('div');
