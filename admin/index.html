@@ -141,7 +141,8 @@ function vistaLogin(errore){
       <label for="pw">Password</label>
       <input id="pw" type="password" autocomplete="current-password">
       <button id="go">Entra</button>
-      <p class="nota">Password dimenticata? Scrivi a Davide: te la reimposta lui.</p>
+      <p class="nota">Password dimenticata o primo accesso?
+        <a href="#" id="reset">Ricevi il link per impostarla</a> sulla tua email di lavoro.</p>
     </div>`;
   const entra = () => {
     const em = document.getElementById('em').value.trim().toLowerCase();
@@ -156,6 +157,22 @@ function vistaLogin(errore){
   };
   document.getElementById('go').onclick = entra;
   document.getElementById('pw').onkeydown = e => { if (e.key === 'Enter') entra(); };
+  document.getElementById('reset').onclick = (ev) => {
+    ev.preventDefault();
+    const msg = document.getElementById('msg');
+    const em = document.getElementById('em').value.trim().toLowerCase();
+    if (!em) { msg.className = 'msg err'; msg.textContent = "Scrivi prima la tua email qui sopra."; return; }
+    msg.className = 'msg'; msg.textContent = 'Mando il link…';
+    auth.sendPasswordResetEmail(em).then(() => {
+      msg.className = 'msg ok';
+      msg.textContent = 'Fatto: controlla la tua casella, dentro c\'è il link per scegliere la password.';
+    }).catch(e => {
+      msg.className = 'msg err';
+      msg.textContent = e.code === 'auth/user-not-found'
+        ? "Questa email non è abilitata al pannello."
+        : 'Non sono riuscito a mandarlo: ' + e.message;
+    });
+  };
 }
 
 // --- schermata: cambio password al primo accesso ------------------------
