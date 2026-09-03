@@ -1,6 +1,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Onboarding Cliente · Template</title>
+<title>Onboarding · DC Academy</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1086,6 +1086,10 @@ function avviaPagina(){
 loadLocal();
 if (ANTEPRIMA) {
   state.stage = 'intro';
+  // in anteprima non c'e' nessun cliente: mostrare "[NOME CLIENTE]" nella barra laterale
+  // fa sembrare la pagina rotta a chi la apre dal pannello.
+  CLIENT_NAME = "anteprima";
+  document.title = "Anteprima del questionario · DC Academy";
   const striscia = document.createElement('div');
   striscia.className = 'striscia-anteprima';
   striscia.textContent = "Anteprima del questionario · niente viene salvato e non si può inviare";
