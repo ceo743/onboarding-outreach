@@ -1,0 +1,262 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pannello clienti · DC Academy</title>
+<style>
+:root{
+  --paper:#eeece5; --paper-raised:#f8f6f0; --ink:#20221f; --ink-soft:#54574f;
+  --line:#d8d4c8; --accent:#2f5d50; --accent-soft:#dde6e0; --warn:#a85a2b;
+  --warn-soft:#f1e2d3; --focus:#1c463a; --shadow:0 2px 10px rgba(32,34,31,0.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#16181b; --paper-raised:#1e2124; --ink:#e9e7de; --ink-soft:#9a9d94;
+    --line:#34372f; --accent:#7fb3a1; --accent-soft:#233229; --warn:#d99a63;
+    --warn-soft:#3a2a1c; --focus:#a9d3c3; --shadow:0 2px 14px rgba(0,0,0,0.45);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#16181b; --paper-raised:#1e2124; --ink:#e9e7de; --ink-soft:#9a9d94;
+  --line:#34372f; --accent:#7fb3a1; --accent-soft:#233229; --warn:#d99a63;
+  --warn-soft:#3a2a1c; --focus:#a9d3c3; --shadow:0 2px 14px rgba(0,0,0,0.45);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);min-height:100vh;
+  font-family:Charter,"Iowan Old Style","Palatino Linotype",Georgia,serif;}
+.wrap{max-width:760px;margin:0 auto;padding:48px 20px 80px;}
+h1{font-family:ui-sans-serif,system-ui,sans-serif;font-size:26px;margin:0 0 6px;letter-spacing:.01em}
+.kicker{font-family:ui-sans-serif,system-ui,sans-serif;font-size:12.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-soft);margin:0 0 10px}
+p.sub{color:var(--ink-soft);font-size:17px;line-height:1.55;margin:0 0 26px}
+.card{background:var(--paper-raised);border:1px solid var(--line);border-radius:14px;
+  padding:26px;box-shadow:var(--shadow);margin-bottom:22px}
+label{display:block;font-family:ui-sans-serif,system-ui,sans-serif;font-size:14px;
+  color:var(--ink-soft);margin:0 0 6px}
+input{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:10px;
+  background:var(--paper);color:var(--ink);font-size:16px;font-family:ui-sans-serif,system-ui,sans-serif;
+  margin-bottom:16px}
+input:focus{outline:none;border-color:var(--focus);box-shadow:0 0 0 3px var(--accent-soft)}
+button{width:100%;padding:14px;border:0;border-radius:10px;background:var(--accent);
+  color:var(--paper-raised);font-size:16px;font-weight:600;cursor:pointer;
+  font-family:ui-sans-serif,system-ui,sans-serif}
+button:hover{filter:brightness(1.06)}
+button.ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--line);font-weight:500}
+.msg{font-family:ui-sans-serif,system-ui,sans-serif;font-size:15px;margin:0 0 14px;min-height:1.2em}
+.msg.err{color:var(--warn)}
+.msg.ok{color:var(--accent)}
+.riga{display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+  padding:12px 0;border-bottom:1px solid var(--line);font-size:16px}
+.riga:last-child{border-bottom:0}
+.riga .chi{font-weight:600}
+.riga .link{font-family:ui-sans-serif,system-ui,sans-serif;font-size:13.5px}
+a{color:var(--accent)}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;
+  font-family:ui-sans-serif,system-ui,sans-serif;font-size:14px;color:var(--ink-soft)}
+.topbar button{width:auto;padding:8px 14px;font-size:13.5px}
+.nota{font-family:ui-sans-serif,system-ui,sans-serif;font-size:13.5px;color:var(--ink-soft);
+  line-height:1.5;margin:14px 0 0}
+[hidden]{display:none!important}
+</style>
+
+<div class="wrap" id="app"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyA9xblm9cvKgb6SOKU0PnmVq2sx7MqjsUA",
+  authDomain: "dc-outreach-dashboard.firebaseapp.com",
+  projectId: "dc-outreach-dashboard",
+  storageBucket: "dc-outreach-dashboard.firebasestorage.app",
+  messagingSenderId: "854249722380",
+  appId: "1:854249722380:web:3002aac7e7620ac441d429"
+};
+firebase.initializeApp(FIREBASE_CONFIG);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const DASHBOARD = "https://clienti.davidecaiazzo.it/dashboard-outreach/";
+const app = document.getElementById('app');
+
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function slugify(nome){
+  return nome.normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+}
+
+function schedaVuota(slug, nome, brand){
+  return {
+    slug, nome, brand: brand || nome, email_autorizzate: [],
+    aggiornato: new Date().toISOString().replace(/\.\d{3}Z$/,'Z'),
+    kpi:{ inviti_totali:0, accettati:0, tasso_accettazione_maturi:null,
+      tasso_accettazione_storico:null, messaggiati:0, messaggi_totali:0, risposte:0,
+      tasso_risposta:null, risposte_positive:0, call_fissate:0, referral:0 },
+    funnel:[{fase:'Inviti',v:0},{fase:'Accettati',v:0},{fase:'Contattati',v:0},
+      {fase:'Risposte',v:0},{fase:'Call',v:0}],
+    serie_giornaliera:[], registro_risposte:[], log:[]
+  };
+}
+
+// --- schermata: accesso -------------------------------------------------
+function vistaLogin(errore){
+  app.innerHTML = `
+    <p class="kicker">DC Academy</p>
+    <h1>Pannello clienti</h1>
+    <p class="sub">Riservato al team. Entra con la tua email di lavoro.</p>
+    <div class="card">
+      <p class="msg err" id="msg">${esc(errore || '')}</p>
+      <label for="em">Email</label>
+      <input id="em" type="email" autocomplete="username" placeholder="nome@davidecaiazzo.it">
+      <label for="pw">Password</label>
+      <input id="pw" type="password" autocomplete="current-password">
+      <button id="go">Entra</button>
+      <p class="nota">Password dimenticata? Scrivi a Davide: te la reimposta lui.</p>
+    </div>`;
+  const entra = () => {
+    const em = document.getElementById('em').value.trim().toLowerCase();
+    const pw = document.getElementById('pw').value;
+    if (!em || !pw) { document.getElementById('msg').textContent = 'Scrivi email e password.'; return; }
+    document.getElementById('msg').textContent = 'Un attimo…';
+    auth.signInWithEmailAndPassword(em, pw).catch(e => {
+      const m = { 'auth/wrong-password':'Password sbagliata.', 'auth/user-not-found':'Email non riconosciuta.',
+        'auth/invalid-credential':'Email o password sbagliate.', 'auth/too-many-requests':'Troppi tentativi, riprova fra qualche minuto.' };
+      document.getElementById('msg').textContent = m[e.code] || ('Non riesco a farti entrare: ' + e.message);
+    });
+  };
+  document.getElementById('go').onclick = entra;
+  document.getElementById('pw').onkeydown = e => { if (e.key === 'Enter') entra(); };
+}
+
+// --- schermata: cambio password al primo accesso ------------------------
+function vistaCambioPassword(user){
+  app.innerHTML = `
+    <p class="kicker">Primo accesso</p>
+    <h1>Scegli la tua password</h1>
+    <p class="sub">Quella che ti abbiamo dato la sa anche chi te l'ha mandata. Scegline una tua, la conoscerai solo tu.</p>
+    <div class="card">
+      <p class="msg err" id="msg"></p>
+      <label for="p1">Nuova password (almeno 10 caratteri)</label>
+      <input id="p1" type="password" autocomplete="new-password">
+      <label for="p2">Riscrivila</label>
+      <input id="p2" type="password" autocomplete="new-password">
+      <button id="go">Salva ed entra</button>
+    </div>`;
+  document.getElementById('go').onclick = () => {
+    const p1 = document.getElementById('p1').value, p2 = document.getElementById('p2').value;
+    const msg = document.getElementById('msg');
+    if (p1.length < 10) { msg.textContent = 'Troppo corta: almeno 10 caratteri.'; return; }
+    if (p1 !== p2) { msg.textContent = 'Le due password non sono uguali.'; return; }
+    msg.textContent = 'Salvo…';
+    user.updatePassword(p1)
+      .then(() => avvia(user, true))
+      .catch(e => { msg.textContent = 'Non sono riuscito a salvarla: ' + e.message; });
+  };
+}
+
+// --- schermata: pannello ------------------------------------------------
+function vistaPannello(user){
+  app.innerHTML = `
+    <div class="topbar">
+      <span>${esc(user.email)}</span>
+      <button class="ghost" id="esci">Esci</button>
+    </div>
+    <p class="kicker">DC Academy</p>
+    <h1>Aggiungi nuovo cliente</h1>
+    <p class="sub">Nome ed email: il cliente ha subito la sua dashboard e il suo accesso.</p>
+    <div class="card">
+      <p class="msg" id="msg"></p>
+      <label for="nome">Nome e cognome del cliente</label>
+      <input id="nome" placeholder="Mario Rossi">
+      <label for="email">La sua email</label>
+      <input id="email" type="email" placeholder="mario@azienda.it">
+      <label for="brand">Azienda (facoltativo)</label>
+      <input id="brand" placeholder="Rossi Costruzioni">
+      <button id="crea">Crea il cliente</button>
+      <p class="nota">Gli si manda il link della dashboard: al primo accesso si crea lui la password.
+        I numeri restano a zero finché non parte il suo outreach.</p>
+    </div>
+    <div class="card">
+      <h1 style="font-size:19px;margin-bottom:14px">Clienti attivi</h1>
+      <div id="elenco"><p class="nota">Carico…</p></div>
+    </div>`;
+  document.getElementById('esci').onclick = () => auth.signOut();
+  document.getElementById('crea').onclick = () => creaCliente(user);
+  elencoClienti();
+}
+
+function elencoClienti(){
+  db.collection('clienti').get().then(snap => {
+    const box = document.getElementById('elenco');
+    if (!box) return;
+    if (snap.empty) { box.innerHTML = '<p class="nota">Ancora nessuno.</p>'; return; }
+    const righe = [];
+    snap.forEach(d => {
+      const c = d.data();
+      righe.push(`<div class="riga">
+        <span class="chi">${esc(c.nome || d.id)}</span>
+        <span class="link">${esc((c.email_autorizzate || []).join(', ') || 'nessuna email abilitata')}</span>
+      </div>`);
+    });
+    box.innerHTML = righe.join('');
+  }).catch(e => {
+    const box = document.getElementById('elenco');
+    if (box) box.innerHTML = `<p class="nota">Non riesco a leggere l'elenco: ${esc(e.message)}</p>`;
+  });
+}
+
+function creaCliente(user){
+  const msg = document.getElementById('msg');
+  const nome = document.getElementById('nome').value.trim();
+  const email = document.getElementById('email').value.trim().toLowerCase();
+  const brand = document.getElementById('brand').value.trim();
+  msg.className = 'msg err';
+  if (!nome) { msg.textContent = 'Manca il nome del cliente.'; return; }
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { msg.textContent = "L'email non sembra valida."; return; }
+  const slug = slugify(nome);
+  if (!slug) { msg.textContent = 'Il nome deve contenere almeno una lettera.'; return; }
+
+  msg.className = 'msg'; msg.textContent = 'Creo il cliente…';
+  const ref = db.collection('clienti').doc(slug);
+  ref.get().then(snap => {
+    const dati = snap.exists ? snap.data() : schedaVuota(slug, nome, brand);
+    if (brand) dati.brand = brand;
+    dati.email_autorizzate = (dati.email_autorizzate || []).map(e => String(e).toLowerCase());
+    if (!dati.email_autorizzate.includes(email)) dati.email_autorizzate.push(email);
+    return ref.set(dati)
+      .then(() => db.collection('accessi').doc(email).set({ slug, aggiornato: new Date().toISOString() }))
+      .then(() => ({ giaCera: snap.exists }));
+  }).then(({ giaCera }) => {
+    msg.className = 'msg ok';
+    msg.innerHTML = `${giaCera ? 'Cliente aggiornato' : 'Cliente creato'}: <strong>${esc(nome)}</strong>.
+      Mandagli questo link: <a href="${DASHBOARD}" target="_blank" rel="noopener">${DASHBOARD}</a>`;
+    document.getElementById('nome').value = '';
+    document.getElementById('email').value = '';
+    document.getElementById('brand').value = '';
+    elencoClienti();
+  }).catch(e => {
+    msg.className = 'msg err';
+    msg.textContent = e.code === 'permission-denied'
+      ? "Il tuo utente non è abilitato a creare clienti. Chiedi a Davide di aggiungerti."
+      : 'Non ce l\'ho fatta: ' + e.message;
+  });
+}
+
+// --- avvio --------------------------------------------------------------
+function avvia(user, passwordAppenaCambiata){
+  if (passwordAppenaCambiata) { vistaPannello(user); return; }
+  // primo accesso = password mai cambiata da quando l'account è stato creato
+  user.getIdToken().then(idToken =>
+    fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${FIREBASE_CONFIG.apiKey}`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ idToken })
+    }).then(r => r.json())
+  ).then(d => {
+    const u = (d.users || [])[0] || {};
+    const creato = Number(u.createdAt || 0), cambiata = Number(u.passwordUpdatedAt || 0);
+    if (creato && cambiata && Math.abs(cambiata - creato) < 120000) vistaCambioPassword(user);
+    else vistaPannello(user);
+  }).catch(() => vistaPannello(user));
+}
+
+auth.onAuthStateChanged(user => { user ? avvia(user, false) : vistaLogin(); });
+</script>

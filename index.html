@@ -208,6 +208,8 @@ try {
 const CLIENT_NAME = "[NOME CLIENTE]";
 const CLIENT_SLUG = "[slug-cliente]";
 const GATE_EMAIL = "[email@cliente.it]";
+// Vero solo sulla pagina modello (onboarding.davidecaiazzo.it): li' mostriamo il LOGIN del team.
+const IS_TEMPLATE = CLIENT_SLUG.charAt(0) === "[";
 const WEBHOOK_URL = "https://hooks.zapier.com/hooks/catch/6421650/442abaj/";
 const STORAGE_KEY = "dcacademy_onboarding_" + CLIENT_SLUG;
 
@@ -361,6 +363,9 @@ function renderGate(){
           <p class="gate-error" id="gateError"></p>
           <button class="primary" id="gateBtn" style="width:100%;">Continua</button>
         </div>
+        ${IS_TEMPLATE ? `<p class="hint" style="text-align:center;margin-top:20px;">
+          Sei del team DC Academy? <a href="/admin/" style="color:var(--accent);font-weight:600;">LOGIN</a>
+        </p>` : ''}
       </div></div>
     </div>
   `;
