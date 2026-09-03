@@ -16,7 +16,7 @@
   --paper-sunken:#e7e3d8;
   --ink:#1b1d19;
   --ink-soft:#5d6157;
-  --ink-faint:#8b8f83;
+  --ink-faint:#696b67;
   --line:#dcd7c9;
   --line-soft:#e7e3d8;
   --accent:#2d5c4d;
@@ -37,7 +37,7 @@
     --paper-sunken:#0d0f0c;
     --ink:#ece9df;
     --ink-soft:#9ba193;
-    --ink-faint:#6f7568;
+    --ink-faint:#797f77;
     --line:#2c3029;
     --line-soft:#232720;
     --accent:#86b8a3;
@@ -53,7 +53,7 @@
 }
 :root[data-theme="dark"]{
   --paper:#111310; --paper-raised:#191c18; --paper-sunken:#0d0f0c;
-  --ink:#ece9df; --ink-soft:#9ba193; --ink-faint:#6f7568;
+  --ink:#ece9df; --ink-soft:#9ba193; --ink-faint:#797f77;
   --line:#2c3029; --line-soft:#232720;
   --accent:#86b8a3; --accent-ink:#a9d3c3; --accent-soft:#1d2a24;
   --warn:#d99a63; --warn-soft:#33251a; --focus:#86b8a3;
@@ -63,7 +63,7 @@
 }
 :root[data-theme="light"]{
   --paper:#efece3; --paper-raised:#fbf9f4; --paper-sunken:#e7e3d8;
-  --ink:#1b1d19; --ink-soft:#5d6157; --ink-faint:#8b8f83;
+  --ink:#1b1d19; --ink-soft:#5d6157; --ink-faint:#696b67;
   --line:#dcd7c9; --line-soft:#e7e3d8;
   --accent:#2d5c4d; --accent-ink:#1f4438; --accent-soft:#dfeae4;
   --warn:#9c5323; --warn-soft:#f2e4d6; --focus:#2d5c4d;
@@ -297,6 +297,21 @@ body.con-striscia{ padding-top:40px; }
 
 .footer-privacy{ font-size:12px; color:var(--ink-faint); line-height:1.6; padding-top:20px; border-top:1px solid var(--line-soft); margin-top:auto; }
 .footer-privacy a{ color:var(--ink-soft); }
+.footer-privacy p{ margin:0 0 10px; }
+.footer-piva{ margin-top:10px !important; }
+.info-privacy{ margin:2px 0 12px; }
+.info-privacy summary{
+  cursor:pointer; color:var(--ink-soft); font-weight:600; list-style:none; font-size:12px;
+  text-decoration:underline; text-underline-offset:2px;
+}
+.info-privacy summary::-webkit-details-marker{ display:none; }
+.info-privacy-corpo{
+  margin-top:10px; padding:14px 16px; background:var(--paper-sunken); border:1px solid var(--line-soft);
+  border-radius:14px; font-size:12px; line-height:1.6;
+}
+.info-privacy-corpo b{ color:var(--ink-soft); font-weight:700; }
+.info-privacy-corpo p{ margin:0 0 10px; }
+.info-privacy-corpo p:last-child{ margin-bottom:0; }
 
 /* ── selettore settori Sales Navigator ────────────────────────────────── */
 .sn-wrap{ margin-top:18px; }
@@ -553,8 +568,26 @@ function loadLocal(){
   } catch(e){}
 }
 
+// Il dominio nudo (senza ?c=<slug>) non ha nessun cliente: mostrare il cancello con un nome
+// placeholder rotto ("Bentornato, [NOME") e' l'errore che capita a chiunque digiti l'indirizzo
+// a mano o lo trovi indicizzato. Qui si mostra una schermata onesta, con solo l'accesso team.
 function renderGate(){
   const app = document.getElementById('app');
+  if (IS_TEMPLATE) {
+    app.innerHTML = `
+      <div class="shell" style="grid-template-columns:1fr;">
+        <div class="main"><div class="stage">
+          <div class="card card-panel gate">
+            <p class="eyebrow">DC Academy · Onboarding</p>
+            <h2 class="question">Il tuo questionario ha un indirizzo suo</h2>
+            <p class="hint">Ti arriva per email da academy@davidecaiazzo.it insieme al link giusto. Se lo hai perso, rispondi a quella email e te lo rimandiamo.</p>
+          </div>
+          <a href="/admin/" class="login-team">Login</a>
+        </div></div>
+      </div>
+    `;
+    return;
+  }
   app.innerHTML = `
     <div class="shell" style="grid-template-columns:1fr;">
       <div class="main"><div class="stage">
@@ -566,7 +599,6 @@ function renderGate(){
           <p class="gate-error" id="gateError"></p>
           <button class="primary" id="gateBtn" style="width:100%;justify-content:center;">Entra</button>
         </div>
-        ${IS_TEMPLATE ? `<a href="/admin/" class="login-team">Login</a>` : ''}
       </div></div>
     </div>
   `;
@@ -616,7 +648,21 @@ function renderShell(innerHtml){
           <p class="sub">Il pallino verde vuol dire che la risposta è già scritta da noi e aspetta il tuo controllo. Puoi rispondere in qualsiasi ordine e riprendere quando vuoi: si salva da solo.</p>
         </div>
         <div class="sections" id="railSections"></div>
-        <p class="footer-privacy">Quello che scrivi resta tra te e il team DC Academy: lo usiamo per costruire i messaggi e le liste di contatti, non lo diamo a nessun altro. DC Academy S.r.l. · P.IVA 05125350750 · <a href="mailto:academy@davidecaiazzo.it">academy@davidecaiazzo.it</a></p>
+        <div class="footer-privacy">
+          <p>Quello che scrivi resta tra te e il team DC Academy: lo usiamo per costruire i messaggi e le liste di contatti, non lo diamo a nessun altro.</p>
+          <details class="info-privacy">
+            <summary>Informativa privacy completa</summary>
+            <div class="info-privacy-corpo">
+              <p><b>Titolare del trattamento</b><br>DC Academy S.r.l., P.IVA 05125350750, academy@davidecaiazzo.it.</p>
+              <p><b>Cosa raccogliamo</b><br>Le risposte che scrivi in questo questionario: informazioni sulla tua attivita', il tuo mercato, i tuoi clienti, e l'email a cui ti abbiamo scritto.</p>
+              <p><b>Perche'</b><br>Per preparare la strategia di posizionamento e i messaggi di contatto del servizio che hai attivato con DC Academy. Base giuridica: esecuzione del contratto in corso, nessun consenso di marketing separato viene richiesto qui.</p>
+              <p><b>Per quanto tempo</b><br>Per la durata della collaborazione, poi archiviate.</p>
+              <p><b>Con chi le condividiamo</b><br>Solo con il team DC Academy che segue il tuo account. Nessuna cessione a terzi.</p>
+              <p><b>I tuoi diritti</b><br>Puoi chiedere di vedere, correggere o cancellare i tuoi dati in qualsiasi momento scrivendo a academy@davidecaiazzo.it.</p>
+            </div>
+          </details>
+          <p class="footer-piva">DC Academy S.r.l. · P.IVA 05125350750 · <a href="mailto:academy@davidecaiazzo.it">academy@davidecaiazzo.it</a></p>
+        </div>
       </aside>
       <div class="main">
         <div class="mobile-bar">
