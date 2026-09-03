@@ -609,7 +609,7 @@ function renderGate(){
       saveLocal();
       renderAll();
     } else {
-      document.getElementById('gateError').textContent = "Questa email non risulta. Usa quella a cui e' arrivato il link, oppure scrivici e la sistemiamo.";
+      document.getElementById('gateError').textContent = "Questa email non risulta. Usa quella a cui è arrivato il link, oppure scrivici e la sistemiamo.";
     }
   };
   document.getElementById('gateBtn').onclick = check;
@@ -925,7 +925,7 @@ function renderQuestion(){
       ${statusChip(q)}
       <h2 class="question">${q.text}</h2>
       ${q.hint ? `<p class="hint" style="margin:0 0 4px;">${q.hint}</p>` : ''}
-      ${q.nota ? `<div class="nota-box"><b>Perche\u0300 te lo chiediamo</b>${q.nota}</div>` : ''}
+      ${q.nota ? `<div class="nota-box"><b>Perch\u00e9 te lo chiediamo</b>${q.nota}</div>` : ''}
       ${campo}
       ${q.critical ? `<div class="critical-note">⚠ ${q.criticalNote}</div>` : ''}
       <div class="actions">
@@ -1012,7 +1012,7 @@ function renderRecap(){
 
 function submitFinal(){
   if (ANTEPRIMA) {
-    alert("Questa è l'anteprima del questionario: serve a vedere com'e' fatto, non si può inviare.");
+    alert("Questa è l'anteprima del questionario: serve a vedere com'è fatto, non si può inviare.");
     return;
   }
   state.submitted = true;

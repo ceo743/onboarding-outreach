@@ -436,29 +436,32 @@ function mostraRisposte(slug){
   box.dataset.fatto = '1';
   Promise.all([
     db.collection('onboarding_wizard').doc(slug).get(),
-    caricaDomande(slug)
+    caricaDomande()
   ]).then(([snap, domande]) => {
     const dati = snap.data() || {};
     let stato = {};
     try { stato = JSON.parse(dati.stato_json || '{}'); } catch(e) {}
     const risposte = stato.answers || {};
     const saltate = stato.skipped || {};
+    const bozze = dati.bozze || {};
     if (dati.stato_preparazione === 'da_preparare' && !Object.keys(domande).length) {
       box.innerHTML = '<p class="nota">Stiamo preparando il questionario da quello che ha detto in call. Appena è pronto compare qui col link da mandargli.</p>';
       return;
     }
-    const chiavi = Object.keys(domande).length ? Object.keys(domande) : Object.keys(risposte);
+    const chiavi = Object.keys(domande).length
+      ? Object.keys(domande)
+      : Object.keys(Object.assign({}, bozze, risposte));
     const righe = chiavi.map(k => {
-      const q = domande[k] || { testo:k, bozza:'' };
+      const q = domande[k] || { testo:k };
       const r = String(risposte[k] || '').trim();
       let corpo;
       if (r) corpo = esc(r);
-      else if (q.bozza) corpo = `<span class="bozza">bozza scritta da noi, il cliente non l'ha ancora confermata</span>${esc(q.bozza)}`;
+      else if (String(bozze[k] || '').trim()) corpo = `<span class="bozza">bozza scritta da noi, il cliente non l'ha ancora confermata</span>${esc(bozze[k])}`;
       else corpo = `<span class="vuota">${saltate[k] ? 'saltata dal cliente' : 'non ancora risposta'}</span>`;
       return `<p class="dom">${esc(q.testo)}</p><p class="ris">${corpo}</p>`;
     });
     const link = `<p class="nota" style="margin:0 0 16px">Link del questionario:
-      <a href="../outreach-${esc(slug)}/" target="_blank" rel="noopener">onboarding.davidecaiazzo.it/outreach-${esc(slug)}/</a></p>`;
+      <a href="../?c=${esc(slug)}" target="_blank" rel="noopener">onboarding.davidecaiazzo.it/?c=${esc(slug)}</a></p>`;
     box.innerHTML = (Object.keys(domande).length ? link : '') + (righe.length ? righe.join('') : '<p class="nota">Nessuna risposta.</p>');
   }).catch(e => { box.innerHTML = `<p class="nota">Non riesco a leggerle: ${esc(e.message)}</p>`; });
 }
@@ -515,19 +518,23 @@ function ripulisci(t){
   return String(t).replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\\\/g, '\\');
 }
 
-// Dalla pagina del cliente prendiamo testo della domanda E bozza scritta da noi.
-function caricaDomande(slug){
-  if (testiDomande[slug]) return Promise.resolve(testiDomande[slug]);
-  return fetch(`../outreach-${slug}/`).then(r => r.ok ? r.text() : '').then(html => {
+// I testi delle domande stanno nella pagina unica del questionario: la leggiamo una volta
+// sola e la teniamo da parte. Le bozze scritte dal motore stanno su Firestore (campo bozze).
+let cacheDomande = null;
+function caricaDomande(){
+  if (cacheDomande) return Promise.resolve(cacheDomande);
+  return fetch('../?anteprima=1').then(r => r.ok ? r.text() : '').then(html => {
     const mappa = {};
-    const re = /\{\s*id:\s*"([^"]+)"\s*,\s*text:\s*"((?:[^"\\]|\\.)*)"([\s\S]*?)\}\s*[,\]]/g;
+    const reId = /id:\s*"([^"]+)"/g;
+    const punti = [];
     let m;
-    while ((m = re.exec(html))) {
-      const resto = m[3] || '';
-      const d = /draft:\s*"((?:[^"\\]|\\.)*)"/.exec(resto);
-      mappa[m[1]] = { testo: ripulisci(m[2]), bozza: d ? ripulisci(d[1]) : '' };
-    }
-    testiDomande[slug] = mappa;
+    while ((m = reId.exec(html))) punti.push({ id: m[1], da: m.index });
+    punti.forEach((p, k) => {
+      const fine = k + 1 < punti.length ? punti[k + 1].da : Math.min(html.length, p.da + 2500);
+      const t = /text:\s*"((?:[^"\\]|\\.)*)"/.exec(html.slice(p.da, fine));
+      if (t) mappa[p.id] = { testo: ripulisci(t[1]) };
+    });
+    if (Object.keys(mappa).length) cacheDomande = mappa;
     return mappa;
   }).catch(() => ({}));
 }

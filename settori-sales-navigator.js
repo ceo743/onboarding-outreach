@@ -6,7 +6,7 @@ window.SN_SETTORI = [
   "gruppo": "Servizi professionali e consulenza",
   "sottogruppi": [
    {
-    "nome": "Consulenza e management",
+    "nome": "Consulenza e direzione aziendale",
     "voci": [
      "Consulenza attività operative",
      "Consulenza e servizi aziendali",
@@ -32,7 +32,7 @@ window.SN_SETTORI = [
     ]
    },
    {
-    "nome": "Marketing, pubblicita e comunicazione",
+    "nome": "Marketing, pubblicità e comunicazione",
     "voci": [
      "Pubbliche Relazioni e servizi di comunicazione",
      "Servizi di marketing",
@@ -41,7 +41,7 @@ window.SN_SETTORI = [
     ]
    },
    {
-    "nome": "Risorse umane e recruiting",
+    "nome": "Risorse umane e selezione del personale",
     "voci": [
      "Coaching e formazione professionale",
      "Risorse umane",
@@ -213,7 +213,7 @@ window.SN_SETTORI = [
     ]
    },
    {
-    "nome": "Farmaceutico, biotech e dispositivi medici",
+    "nome": "Farmaceutico, biotecnologie e dispositivi medici",
     "voci": [
      "Biotecnologie",
      "Fabbricazione di apparecchiature medicali",
@@ -384,7 +384,7 @@ window.SN_SETTORI = [
   ]
  },
  {
-  "gruppo": "Automotive, aerospazio e mezzi di trasporto",
+  "gruppo": "Auto, aerospazio e mezzi di trasporto",
   "sottogruppi": [
    {
     "nome": "Aerospazio e difesa",
@@ -398,7 +398,7 @@ window.SN_SETTORI = [
     ]
    },
    {
-    "nome": "Automotive",
+    "nome": "Auto e veicoli",
     "voci": [
      "Fabbricazione di autoveicoli",
      "Fabbricazione di mezzi di trasporto",
@@ -734,7 +734,7 @@ window.SN_SETTORI = [
   ]
  },
  {
-  "gruppo": "Settore pubblico, non profit e istituzioni",
+  "gruppo": "Settore pubblico, terzo settore e istituzioni",
   "sottogruppi": [
    {
     "nome": "Cultura e patrimonio",
@@ -746,7 +746,7 @@ window.SN_SETTORI = [
     ]
    },
    {
-    "nome": "Non profit e associazioni",
+    "nome": "Terzo settore e associazioni",
     "voci": [
      "Associazioni di settore",
      "Filantropia",
