@@ -124,6 +124,8 @@ firebase.initializeApp(FIREBASE_CONFIG);
 const auth = firebase.auth();
 const db = firebase.firestore();
 const DASHBOARD = "https://clienti.davidecaiazzo.it/dashboard-outreach/";
+// Il motore che legge la call, scrive le bozze e manda l'email: sta online, non sul Mac di nessuno.
+const MOTORE = "https://dc-chatbot-vswb.onrender.com/onboarding/prepara";
 const app = document.getElementById('app');
 
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
@@ -260,9 +262,9 @@ function vistaPannello(user){
       </details>
 
       <button id="crea">Crea il cliente</button>
-      <p class="nota">Prepariamo le sue domande leggendo la call, il suo sito e il suo LinkedIn, poi
-        parte da sola l'email da academy@davidecaiazzo.it con il link per rispondere (in copia Chiara,
-        Roberta e Davide). Di solito entro mezz'ora. La dashboard nasce da sola quando ha finito.</p>
+      <p class="nota">Appena premi: leggiamo la call, scriviamo le sue risposte e parte l'email da
+        academy@davidecaiazzo.it col link per rispondere, in copia Chiara, Roberta e Davide.
+        Ci vuole circa un minuto. La dashboard nasce da sola quando il cliente ha finito.</p>
     </div>
     <div class="card">
       <h1 style="font-size:19px;margin-bottom:6px">Clienti</h1>
@@ -488,11 +490,20 @@ function creaCliente(user){
     richiesto_il: new Date().toISOString(),
     richiesto_da: user.email
   }, { merge: true }).then(() => {
+    msg.textContent = 'Sto leggendo la call e scrivendo le sue domande… un minuto.';
+    return user.getIdToken().then(idToken => fetch(MOTORE, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id_token: idToken, slug, cliente: nomeVisibile, email,
+                             brand, fonti, trascrizione })
+    })).then(r => r.json().then(d => ({ ok: r.ok, d })));
+  }).then(({ ok, d }) => {
+    if (!ok || !d.ok) throw new Error((d && d.errore) || 'il motore non ha risposto');
     msg.className = 'msg ok';
-    msg.innerHTML = `Ricevuto: <strong>${esc(nomeVisibile)}</strong>.
-      Prepariamo le sue domande dalla call e gli mandiamo noi l'email da academy@davidecaiazzo.it
-      con il link per rispondere, in copia Chiara, Roberta e te.
-      La sua dashboard nasce da sola quando ha finito di rispondere.`;
+    msg.innerHTML = `Fatto: <strong>${esc(nomeVisibile)}</strong>.
+      ${d.bozze} risposte già scritte dalla call, email partita da academy@davidecaiazzo.it
+      con Chiara, Roberta e te in copia.<br>
+      Il suo questionario: <a href="${esc(d.link)}" target="_blank" rel="noopener">${esc(d.link)}</a><br>
+      La dashboard nasce da sola quando ha finito di rispondere.`;
     ['email','trascrizione','nome','brand','fonti'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
     const fs = document.getElementById('filestato'); if (fs) fs.textContent = '';
     elencoTutto();

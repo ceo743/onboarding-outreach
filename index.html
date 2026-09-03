@@ -220,16 +220,16 @@ try {
 } catch(e) {}
 /* TEMPLATE · per un nuovo cliente: cambia questi 4 valori, popola i draft nelle SECTIONS
    (prima persona, senza "(fonte:...)"), aggiorna il webhook se serve un hook dedicato. */
-const CLIENT_NAME = "[NOME CLIENTE]";
-const CLIENT_SLUG = "[slug-cliente]";
-const GATE_EMAIL = "[email@cliente.it]";
+let CLIENT_NAME = "[NOME CLIENTE]";
+let CLIENT_SLUG = "[slug-cliente]";
+let GATE_EMAIL = "[email@cliente.it]";
 // Vero solo sulla pagina modello (onboarding.davidecaiazzo.it): li' mostriamo il LOGIN del team.
-const IS_TEMPLATE = CLIENT_SLUG.charAt(0) === "[";
+let IS_TEMPLATE = CLIENT_SLUG.charAt(0) === "[";
 // Anteprima per il team: si sfoglia il questionario esattamente com'e', ma non si puo' inviare
 // e non si salva niente. Vale SOLO sulla pagina modello, mai su quella di un cliente vero.
 const ANTEPRIMA = IS_TEMPLATE && new URLSearchParams(location.search).has('anteprima');
 const WEBHOOK_URL = "https://hooks.zapier.com/hooks/catch/6421650/442abaj/";
-const STORAGE_KEY = "dcacademy_onboarding_" + CLIENT_SLUG;
+let STORAGE_KEY = "dcacademy_onboarding_" + CLIENT_SLUG;
 
 const SECTIONS = [
   { title: "Anagrafica", questions: [
@@ -641,6 +641,32 @@ function renderAll(){
   renderQuestion();
 }
 
+// Pagina unica: con ?c=<slug> carica cliente, email e bozze da Firestore.
+// Cosi' un cliente nuovo e' online nello stesso momento in cui viene creato, senza pubblicare file.
+function caricaClienteDaId(){
+  const id = new URLSearchParams(location.search).get('c');
+  if (!id || !IS_TEMPLATE) return Promise.resolve();
+  const url = 'https://firestore.googleapis.com/v1/projects/dc-outreach-dashboard/databases/(default)/documents/onboarding_wizard/' + encodeURIComponent(id);
+  return fetch(url).then(r => r.ok ? r.json() : null).then(doc => {
+    if (!doc) return;
+    const f = doc.fields || {};
+    CLIENT_SLUG = id;
+    CLIENT_NAME = (f.cliente && f.cliente.stringValue) || id;
+    GATE_EMAIL = ((f.email && f.email.stringValue) || '').toLowerCase();
+    STORAGE_KEY = 'dcacademy_onboarding_' + CLIENT_SLUG;
+    IS_TEMPLATE = false;
+    const bozze = (f.bozze && f.bozze.mapValue && f.bozze.mapValue.fields) || {};
+    SECTIONS.forEach(sec => sec.questions.forEach(q => {
+      const v = bozze[q.id] && bozze[q.id].stringValue;
+      if (v) q.draft = v;
+    }));
+    document.title = 'Onboarding · ' + CLIENT_NAME;
+  }).catch(() => {});
+}
+
+caricaClienteDaId().then(avviaPagina);
+
+function avviaPagina(){
 loadLocal();
 if (ANTEPRIMA) {
   state.stage = 'intro';
@@ -652,6 +678,7 @@ if (ANTEPRIMA) {
 }
 renderAll();
 pullFirestore().then(() => { watchFirestore(); });
+}
 
 window.addEventListener('storage', (ev) => {
   if (ev.key !== STORAGE_KEY || !ev.newValue) return;
