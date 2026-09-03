@@ -89,7 +89,6 @@ body::after{
 
 /* ── impianto ──────────────────────────────────────────────────────────── */
 .shell{ display:grid; grid-template-columns:320px 1fr; min-height:100dvh; }
-@media (max-width:900px){ .shell{ grid-template-columns:1fr; } .rail{ display:none; } }
 
 .rail{
   border-right:1px solid var(--line); padding:40px 28px 28px; background:var(--paper-raised);
@@ -138,13 +137,21 @@ body::after{
 /* barra mobile con indice */
 .mobile-bar{ display:none; }
 @media (max-width:900px){
-  .mobile-bar{
-    display:flex; align-items:center; justify-content:space-between; gap:12px;
-    padding:14px 20px; border-bottom:1px solid var(--line); background:var(--paper-raised);
-    position:sticky; top:0; z-index:30; backdrop-filter:blur(12px);
+  .shell{ grid-template-columns:1fr; }
+  .rail{
+    position:fixed; inset:0; z-index:80; display:none; height:100dvh; width:100%;
+    border-right:none; padding:76px 22px 28px;
   }
-  .mobile-bar .titolo{ font-family:Fraunces,Georgia,serif; font-size:16px; font-weight:600; }
-  .mobile-bar button{ padding:9px 16px; font-size:13.5px; }
+  .rail.aperto{ display:flex; animation:entra .5s var(--curva) both; }
+  .mobile-bar{
+    display:flex; align-items:center; justify-content:space-between; gap:14px;
+    padding:14px 18px; border-bottom:1px solid var(--line); background:var(--paper-raised);
+    position:sticky; top:0; z-index:90;
+  }
+  .mobile-bar .titolo{ font-family:Fraunces,Georgia,serif; font-size:15.5px; font-weight:600; line-height:1.25; }
+  .mobile-bar .titolo span{ display:block; font-family:"Plus Jakarta Sans",system-ui,sans-serif; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint); font-weight:700; }
+  .mobile-bar button{ padding:10px 16px; font-size:13px; flex:none; }
+  body.con-striscia .mobile-bar{ top:0; }
 }
 .sheet{
   position:fixed; inset:0; z-index:70; background:var(--backdrop);
@@ -266,6 +273,7 @@ button.text:hover{ color:var(--ink-soft); }
   font-size:12.5px; font-weight:700; letter-spacing:.04em; padding:10px 16px;
 }
 body.con-striscia{ padding-top:40px; }
+@media (max-width:600px){ .striscia-anteprima{ font-size:11.5px; padding:8px 14px; } body.con-striscia{ padding-top:56px; } }
 .login-team{
   position:fixed; top:20px; right:24px; z-index:20; font-size:13px; font-weight:700;
   letter-spacing:.04em; text-decoration:none; color:var(--ink-soft);
@@ -607,6 +615,10 @@ function renderShell(innerHtml){
         <p class="footer-privacy">Quello che scrivi resta tra te e il team DC Academy: lo usiamo per costruire i messaggi e le liste di contatti, non lo diamo a nessun altro. DC Academy S.r.l. · P.IVA 05125350750 · <a href="mailto:academy@davidecaiazzo.it">academy@davidecaiazzo.it</a></p>
       </aside>
       <div class="main">
+        <div class="mobile-bar">
+          <div class="titolo"><span>${showProgress ? 'Domanda ' + (state.i+1) + ' di ' + total : 'Onboarding'}</span>${showProgress && ALL[state.i] ? ALL[state.i].sectionTitle : CLIENT_NAME}</div>
+          <button class="ghost" id="apriIndice">Indice</button>
+        </div>
         ${showProgress ? `
         <div class="topbar">
           <div class="progress-line"><div class="progress-fill" style="width:${Math.round((state.i/total)*100)}%"></div></div>
@@ -619,6 +631,15 @@ function renderShell(innerHtml){
       </div>
     </div>
   `;
+  const apri = document.getElementById('apriIndice');
+  const rail = document.querySelector('.rail');
+  if (apri && rail) {
+    apri.onclick = () => {
+      const aperto = rail.classList.toggle('aperto');
+      apri.textContent = aperto ? 'Chiudi' : 'Indice';
+    };
+    rail.querySelectorAll('*').forEach(() => {});
+  }
   const el = document.getElementById('railSections');
   SECTIONS.forEach((s, si) => {
     const answeredInSection = s.questions.filter(q => state.answers[q.id] !== undefined).length;
@@ -628,6 +649,7 @@ function renderShell(innerHtml){
     div.innerHTML = `<span>${s.title}</span><span class="n">${answeredInSection}/${s.questions.length}</span>`;
     div.style.cursor = 'pointer';
     div.onclick = () => {
+      document.querySelector('.rail').classList.remove('aperto');
       state.i = ALL.findIndex(q => q.sectionIndex === si);
       state.returnToRecap = false;
       state.stage = 'question';
@@ -647,6 +669,7 @@ function renderShell(innerHtml){
         row.innerHTML = `<span class="dot"></span><span>${q.text}</span>`;
         row.onclick = (ev) => {
           ev.stopPropagation();
+          document.querySelector('.rail').classList.remove('aperto');
           state.i = globalIdx;
           state.returnToRecap = false;
           state.stage = 'question';
@@ -939,7 +962,7 @@ function renderRecap(){
 
 function submitFinal(){
   if (ANTEPRIMA) {
-    alert("Questa e' l'anteprima del questionario: serve a vedere com'e' fatto, non si puo' inviare.");
+    alert("Questa è l'anteprima del questionario: serve a vedere com'e' fatto, non si può inviare.");
     return;
   }
   state.submitted = true;
@@ -1015,7 +1038,7 @@ if (ANTEPRIMA) {
   state.stage = 'intro';
   const striscia = document.createElement('div');
   striscia.className = 'striscia-anteprima';
-  striscia.textContent = "Anteprima del questionario · niente viene salvato e non si puo' inviare";
+  striscia.textContent = "Anteprima del questionario · niente viene salvato e non si può inviare";
   document.body.appendChild(striscia);
   document.body.classList.add('con-striscia');
 }
