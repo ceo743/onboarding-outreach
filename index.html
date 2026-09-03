@@ -377,6 +377,16 @@ body.con-striscia{ padding-top:40px; }
 .lk-add:hover{ border-color:var(--accent); color:var(--accent-ink); background:var(--accent-soft); }
 
 /* ── scelta e note ────────────────────────────────────────────────────── */
+.sc-opt{
+  display:flex; align-items:flex-start; gap:13px; padding:16px 18px; margin-bottom:10px;
+  border:1px solid var(--line); border-radius:16px; background:var(--paper); cursor:pointer;
+  transition:border-color .4s var(--curva), background .4s var(--curva), box-shadow .4s var(--curva);
+}
+.sc-opt:last-child{ margin-bottom:0; }
+.sc-opt:hover{ border-color:var(--accent); }
+.sc-opt.on{ border-color:var(--accent); background:var(--accent-soft); box-shadow:0 0 0 1px var(--accent); }
+.sc-opt input{ margin-top:4px; flex:none; width:18px; height:18px; accent-color:var(--accent); cursor:pointer; }
+.sc-txt{ display:block; }
 .sc-txt b{ display:block; font-size:15px; font-weight:600; }
 .sc-txt span{ font-size:13.5px; color:var(--ink-soft); }
 .nota-box{
@@ -432,7 +442,7 @@ const SECTIONS = [
   { title: "Target e mercato", questions: [
     { id:"mercato_settore", text:"In che settore opera l'attività?", draft:"" },
     { id:"mercato_target", text:"Chi è il vostro target cliente? Descrivete l'avatar: ruolo, tipo di azienda, dipendenti, fatturato.", draft:"" },
-    { id:"sn_navigator", type:"scelta", text:"Attiva LinkedIn Sales Navigator prima di partire", draft:"",
+    { id:"sn_navigator", type:"scelta", obbligatoria:true, text:"Attiva LinkedIn Sales Navigator prima di partire", draft:"",
       nota:"E\u0300 lo strumento con cui costruiamo le liste di persone da contattare e con cui scriviamo: senza, LinkedIn normale permette pochissime ricerche e nessun filtro serio, e il lavoro non parte. Si attiva dal tuo profilo LinkedIn, c'e\u0300 un mese di prova gratuito e poi costa circa 100 euro al mese. Ci serve solo la tua conferma.",
       opzioni:[
         {v:"E\u0300 gia\u0300 attivo", d:"Bene, in fase di avvio lo colleghiamo e partiamo."},
@@ -943,7 +953,7 @@ function renderQuestion(){
       <div class="actions">
         <div class="left">
           ${state.i > 0 && !state.returnToRecap ? `<button class="ghost" id="backBtn">Torna indietro</button>` : ''}
-          <button class="text" id="skipBtn">Salta questa domanda</button>
+          ${q.obbligatoria ? '' : '<button class="text" id="skipBtn">Salta questa domanda</button>'}
         </div>
         <button class="primary" id="nextBtn">${state.returnToRecap ? 'Salva e torna al riepilogo' : (state.i === ALL.length - 1 ? 'Vai al riepilogo' : 'Conferma e continua')}</button>
       </div>
@@ -956,11 +966,23 @@ function renderQuestion(){
                     : () => document.getElementById('answerBox').value.trim();
   document.getElementById('nextBtn').onclick = () => {
     const val = leggiValore().trim();
+    if (q.obbligatoria && !val) {
+      const msg = document.getElementById('msgObbligatoria');
+      if (msg) msg.remove();
+      const avviso = document.createElement('p');
+      avviso.id = 'msgObbligatoria';
+      avviso.className = 'msg err';
+      avviso.style.marginTop = '14px';
+      avviso.textContent = 'Scegli una delle due opzioni per continuare.';
+      document.querySelector('.actions').insertAdjacentElement('beforebegin', avviso);
+      return;
+    }
     state.answers[q.id] = val;
     state.skipped[q.id] = val === '';
     advance();
   };
-  document.getElementById('skipBtn').onclick = () => {
+  const skipBtn = document.getElementById('skipBtn');
+  if (skipBtn) skipBtn.onclick = () => {
     state.answers[q.id] = '';
     state.skipped[q.id] = true;
     advance();
@@ -1036,17 +1058,26 @@ function submitFinal(){
 function renderThanks(){
   const rows = buildRecapRows();
   const html = `
-    <div class="card-panel center-screen">
+    <div class="card-panel center-screen thanks-card">
       <p class="eyebrow">Fatto</p>
       <h2 class="question">Grazie, ${CLIENT_NAME.split(' ')[0]}</h2>
-      <p class="hint" style="margin:0 auto;">Da qui in poi tocca a noi: prepariamo le liste e i primi messaggi e ti scriviamo appena sono pronti da approvare. Se ti viene in mente altro, torna qui e modifica: le tue risposte restano sempre aperte.</p>
-      <div class="recap-list" style="text-align:left;">${rows}</div>
+      <p class="hint" style="margin:0 auto;">Da qui in poi tocca a noi: prepariamo le liste e i primi messaggi e ti scriviamo appena sono pronti da approvare. Se ti viene in mente altro, le tue risposte restano sempre aperte e modificabili.</p>
+      <button class="ghost" id="toggleRecap" style="margin-top:22px;">Rivedi o modifica le tue risposte</button>
+      <div class="recap-list" id="thanksRecap" style="text-align:left; display:none; margin-top:26px;">${rows}</div>
     </div>
   `;
   renderShell(html);
   document.querySelectorAll('.redit').forEach(btn => {
     btn.onclick = () => editFromRecap(parseInt(btn.dataset.idx, 10));
   });
+  const toggle = document.getElementById('toggleRecap');
+  const blocco = document.getElementById('thanksRecap');
+  toggle.onclick = () => {
+    const aperto = blocco.style.display !== 'none';
+    blocco.style.display = aperto ? 'none' : 'block';
+    toggle.textContent = aperto ? 'Rivedi o modifica le tue risposte' : 'Nascondi le risposte';
+    if (!aperto) blocco.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  };
 }
 
 // Ogni pulsante principale prende la sua freccia dentro il cerchio, come da sistema visivo.

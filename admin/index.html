@@ -199,6 +199,7 @@ const db = firebase.firestore();
 const DASHBOARD = "https://clienti.davidecaiazzo.it/dashboard-outreach/";
 // Il motore che legge la call, scrive le bozze e manda l'email: sta online, non sul Mac di nessuno.
 const MOTORE = "https://dc-chatbot-vswb.onrender.com/onboarding/prepara";
+const MOTORE_NOTIFICA = "https://dc-chatbot-vswb.onrender.com/onboarding/notifica";
 const app = document.getElementById('app');
 
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
@@ -480,6 +481,16 @@ function nascondiQuestionario(slug){
   }).catch(() => null);
 }
 
+// Sospensioni/eliminazioni sono azioni invasive: Davide vuole sempre saperlo, con chi le
+// ha fatte, su chi, e cosa e' successo (richiesta 03/09/2026). Se l'invio fallisce non
+// blocca l'azione (e' gia' successa): resta solo un avviso in console, mai un dato perso.
+function avvisaAzioneInvasiva(azione, cliente, slug, dettagli){
+  auth.currentUser.getIdToken().then(idToken => fetch(MOTORE_NOTIFICA, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id_token: idToken, azione, cliente, slug, dettagli: dettagli || '' }),
+  })).catch(e => console.warn('notifica azione non inviata:', e));
+}
+
 function azioneCliente(azione, slug){
   const ref = db.collection('clienti').doc(slug);
   ref.get().then(snap => {
@@ -489,10 +500,12 @@ function azioneCliente(azione, slug){
 
     if (azione === 'sospendi') {
       if (!confirm(`Sospendere ${chi}?\n\nSi fermano il suo outreach e l'aggiornamento dei suoi numeri. Nessun dato viene perso e puoi riattivarlo quando vuoi.`)) return;
-      return ref.update({ sospeso: true, sospeso_il: new Date().toISOString() });
+      return ref.update({ sospeso: true, sospeso_il: new Date().toISOString() })
+        .then(() => avvisaAzioneInvasiva('sospeso', chi, slug));
     }
     if (azione === 'riattiva') {
-      return ref.update({ sospeso: false, riattivato_il: new Date().toISOString() });
+      return ref.update({ sospeso: false, riattivato_il: new Date().toISOString() })
+        .then(() => avvisaAzioneInvasiva('riattivato', chi, slug));
     }
     if (azione === 'elimina') {
       if (!confirm(`Eliminare ${chi}?\n\nPerde l'accesso alla dashboard e sparisce da questo elenco. I suoi dati restano in archivio, quindi si può recuperare.`)) return;
@@ -503,7 +516,8 @@ function azioneCliente(azione, slug){
           eliminato: true, eliminato_il: new Date().toISOString(),
           sospeso: true, email_autorizzate: [], email_prima_di_eliminare: emails
         }) : null)
-        .then(() => nascondiQuestionario(slug));
+        .then(() => nascondiQuestionario(slug))
+        .then(() => avvisaAzioneInvasiva('eliminato', chi, slug, emails.length ? `accessi rimossi: ${emails.join(', ')}` : ''));
     }
   }).then(() => { elencoTutto(); })
     .catch(e => alert("Non ce l'ho fatta: " + e.message));
