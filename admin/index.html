@@ -52,6 +52,14 @@ button.ghost{background:transparent;color:var(--ink-soft);border:1px solid var(-
 .riga:last-child{border-bottom:0}
 .riga .chi{font-weight:600}
 .riga .link{font-family:ui-sans-serif,system-ui,sans-serif;font-size:13.5px}
+.riga .azioni{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.tag{font-family:ui-sans-serif,system-ui,sans-serif;font-size:11.5px;text-transform:uppercase;
+  letter-spacing:.06em;color:var(--warn);border:1px solid var(--warn);border-radius:999px;
+  padding:1px 8px;font-weight:600;vertical-align:middle}
+button.mini{width:auto;padding:6px 12px;font-size:13px;background:transparent;color:var(--ink-soft);
+  border:1px solid var(--line);font-weight:500}
+button.mini:hover{color:var(--accent);border-color:var(--accent);filter:none}
+button.mini.rischio:hover{color:var(--warn);border-color:var(--warn)}
 a{color:var(--accent)}
 .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;
   font-family:ui-sans-serif,system-ui,sans-serif;font-size:14px;color:var(--ink-soft)}
@@ -64,13 +72,18 @@ summary{cursor:pointer;font-size:16px;font-weight:600;list-style:none}
 summary::-webkit-details-marker{display:none}
 summary::before{content:"▸ ";color:var(--ink-soft)}
 details[open] summary::before{content:"▾ "}
+summary{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+summary .chi{font-weight:600}
 summary .stato{font-family:ui-sans-serif,system-ui,sans-serif;font-size:13px;
-  font-weight:500;color:var(--ink-soft);margin-left:8px}
+  font-weight:500;color:var(--ink-soft)}
+summary .azioni{margin-left:auto}
 .qa{margin:14px 0 4px}
 .qa .dom{font-family:ui-sans-serif,system-ui,sans-serif;font-size:13.5px;
   color:var(--ink-soft);margin:0 0 3px}
 .qa .ris{margin:0 0 14px;font-size:16.5px;line-height:1.5;white-space:pre-wrap}
 .qa .vuota{color:var(--ink-soft);font-style:italic}
+.qa .bozza{display:block;font-family:ui-sans-serif,system-ui,sans-serif;font-size:12px;
+  letter-spacing:.04em;text-transform:uppercase;color:var(--warn);margin-bottom:4px}
 [hidden]{display:none!important}
 </style>
 
@@ -213,13 +226,9 @@ function vistaPannello(user){
         da mandargli, di solito entro mezz'ora.</p>
     </div>
     <div class="card">
-      <h1 style="font-size:19px;margin-bottom:14px">Clienti attivi</h1>
+      <h1 style="font-size:19px;margin-bottom:6px">Clienti</h1>
+      <p class="nota" style="margin:0 0 10px">Apri un cliente per leggere il suo questionario.</p>
       <div id="elenco"><p class="nota">Carico…</p></div>
-    </div>
-    <div class="card">
-      <h1 style="font-size:19px;margin-bottom:6px">Questionari compilati</h1>
-      <p class="nota" style="margin:0 0 10px">Quello che i clienti hanno scritto nel loro onboarding.</p>
-      <div id="questionari"><p class="nota">Carico…</p></div>
     </div>`;
   document.getElementById('esci').onclick = () => auth.signOut();
   document.getElementById('crea').onclick = () => creaCliente(user);
@@ -233,76 +242,70 @@ function vistaPannello(user){
     };
     lettore.readAsText(f);
   };
-  elencoClienti();
-  elencoQuestionari();
+  elencoTutto();
 }
 
-function elencoClienti(){
-  db.collection('clienti').get().then(snap => {
+function elencoTutto(){
+  Promise.all([
+    db.collection('clienti').get(),
+    db.collection('onboarding_wizard').get().catch(() => null)
+  ]).then(([clienti, wizard]) => {
     const box = document.getElementById('elenco');
     if (!box) return;
-    if (snap.empty) { box.innerHTML = '<p class="nota">Ancora nessuno.</p>'; return; }
-    const righe = [];
-    snap.forEach(d => {
-      const c = d.data();
-      righe.push(`<div class="riga">
-        <span class="chi">${esc(c.nome || d.id)}</span>
-        <span class="link">${esc((c.email_autorizzate || []).join(', ') || 'nessuna email abilitata')}</span>
-      </div>`);
-    });
-    box.innerHTML = righe.join('');
-  }).catch(e => {
-    const box = document.getElementById('elenco');
-    if (box) box.innerHTML = `<p class="nota">Non riesco a leggere l'elenco: ${esc(e.message)}</p>`;
-  });
-}
-
-// --- questionari di onboarding ------------------------------------------
-// Le risposte stanno in onboarding_wizard/{slug}; i testi delle domande stanno
-// nella pagina del cliente, quindi la leggiamo e ne estraiamo le coppie id/domanda.
-const testiDomande = {};
-
-function caricaDomande(slug){
-  if (testiDomande[slug]) return Promise.resolve(testiDomande[slug]);
-  return fetch(`../outreach-${slug}/`).then(r => r.ok ? r.text() : '').then(html => {
     const mappa = {};
-    const re = /\{\s*id:\s*"([^"]+)"\s*,\s*text:\s*"((?:[^"\\]|\\.)*)"/g;
-    let m;
-    while ((m = re.exec(html))) mappa[m[1]] = m[2].replace(/\\"/g, '"').replace(/\\n/g, ' ');
-    testiDomande[slug] = mappa;
-    return mappa;
-  }).catch(() => ({}));
-}
-
-function elencoQuestionari(){
-  db.collection('onboarding_wizard').get().then(snap => {
-    const box = document.getElementById('questionari');
-    if (!box) return;
-    if (snap.empty) { box.innerHTML = '<p class="nota">Nessun questionario ancora.</p>'; return; }
-    const pezzi = [];
-    snap.forEach(d => {
-      const dati = d.data();
-      let stato = {};
-      try { stato = JSON.parse(dati.stato_json || '{}'); } catch(e) {}
-      const risposte = stato.answers || {};
-      const n = Object.keys(risposte).filter(k => String(risposte[k] || '').trim()).length;
-      let etichetta = stato.submitted ? 'confermato dal cliente' : 'in corso';
-      if (dati.stato_preparazione === 'da_preparare') etichetta = 'questionario in preparazione';
-      else if (dati.stato_preparazione === 'pronta' && !n) etichetta = 'questionario pronto, da mandare al cliente';
-      pezzi.push(`<details data-slug="${esc(d.id)}">
-        <summary>${esc(dati.cliente || d.id)}<span class="stato">${etichetta} · ${n} risposte</span></summary>
-        ${dati.stato_preparazione === 'pronta' ? `<p class="nota" style="margin:10px 0 0">Link del questionario:
-          <a href="../outreach-${esc(d.id)}/" target="_blank" rel="noopener">onboarding.davidecaiazzo.it/outreach-${esc(d.id)}/</a></p>` : ''}
-        <div class="qa" data-box="${esc(d.id)}"><p class="nota">Apro…</p></div>
-      </details>`);
+    clienti.forEach(d => {
+      const c = d.data();
+      if (c.eliminato) return;
+      mappa[d.id] = { slug:d.id, nome:c.nome || d.id, emails:(c.email_autorizzate || []),
+        sospeso:!!c.sospeso, scheda:true };
     });
-    box.innerHTML = pezzi.join('');
+    if (wizard) wizard.forEach(d => {
+      const w = d.data();
+      let stato = {};
+      try { stato = JSON.parse(w.stato_json || '{}'); } catch(e) {}
+      const risposte = stato.answers || {};
+      const voce = mappa[d.id] || { slug:d.id, nome:w.cliente || d.id, emails:w.email ? [w.email] : [],
+        sospeso:false, scheda:false };
+      voce.confermato = stato.submitted === true;
+      voce.nRisposte = Object.keys(risposte).filter(k => String(risposte[k] || '').trim()).length;
+      voce.preparazione = w.stato_preparazione || null;
+      voce.questionario = true;
+      mappa[d.id] = voce;
+    });
+
+    const voci = Object.values(mappa).sort((a, b) => a.nome.localeCompare(b.nome));
+    if (!voci.length) { box.innerHTML = '<p class="nota">Ancora nessuno.</p>'; return; }
+
+    box.innerHTML = voci.map(v => {
+      let stato;
+      if (v.preparazione === 'da_preparare') stato = 'questionario in preparazione';
+      else if (v.confermato) stato = `questionario confermato · ${v.nRisposte} risposte`;
+      else if (v.questionario) stato = `questionario da compilare · ${v.nRisposte} risposte`;
+      else stato = 'nessun questionario';
+      return `<details data-slug="${esc(v.slug)}">
+        <summary>
+          <span class="chi">${esc(v.nome)}</span>${v.sospeso ? ' <span class="tag">sospeso</span>' : ''}
+          <span class="stato">${stato}</span>
+          <span class="azioni">
+            <span class="link">${esc(v.emails.join(', ') || 'nessuna email')}</span>
+            ${v.scheda ? `<button class="mini" data-azione="${v.sospeso ? 'riattiva' : 'sospendi'}" data-slug="${esc(v.slug)}">${v.sospeso ? 'Riattiva' : 'Sospendi'}</button>
+            <button class="mini rischio" data-azione="elimina" data-slug="${esc(v.slug)}">Elimina</button>` : ''}
+          </span>
+        </summary>
+        ${v.questionario ? `<div class="qa" data-box="${esc(v.slug)}"><p class="nota">Apro…</p></div>`
+          : '<p class="nota" style="margin:12px 0 0">Questionario non ancora creato.</p>'}
+      </details>`;
+    }).join('');
+
     box.querySelectorAll('details').forEach(det => {
       det.addEventListener('toggle', () => { if (det.open) mostraRisposte(det.dataset.slug); });
     });
+    box.querySelectorAll('button[data-azione]').forEach(b => {
+      b.onclick = (ev) => { ev.preventDefault(); ev.stopPropagation(); azioneCliente(b.dataset.azione, b.dataset.slug); };
+    });
   }).catch(e => {
-    const box = document.getElementById('questionari');
-    if (box) box.innerHTML = `<p class="nota">Non riesco a leggere i questionari: ${esc(e.message)}</p>`;
+    const box = document.getElementById('elenco');
+    if (box) box.innerHTML = `<p class="nota">Non riesco a leggere l'elenco: ${esc(e.message)}</p>`;
   });
 }
 
@@ -314,20 +317,85 @@ function mostraRisposte(slug){
     db.collection('onboarding_wizard').doc(slug).get(),
     caricaDomande(slug)
   ]).then(([snap, domande]) => {
+    const dati = snap.data() || {};
     let stato = {};
-    try { stato = JSON.parse((snap.data() || {}).stato_json || '{}'); } catch(e) {}
+    try { stato = JSON.parse(dati.stato_json || '{}'); } catch(e) {}
     const risposte = stato.answers || {};
     const saltate = stato.skipped || {};
+    if (dati.stato_preparazione === 'da_preparare' && !Object.keys(domande).length) {
+      box.innerHTML = '<p class="nota">Stiamo preparando il questionario da quello che ha detto in call. Appena è pronto compare qui col link da mandargli.</p>';
+      return;
+    }
     const chiavi = Object.keys(domande).length ? Object.keys(domande) : Object.keys(risposte);
     const righe = chiavi.map(k => {
-      const testo = domande[k] || k;
+      const q = domande[k] || { testo:k, bozza:'' };
       const r = String(risposte[k] || '').trim();
-      const corpo = r ? esc(r)
-        : `<span class="vuota">${saltate[k] ? 'saltata dal cliente' : 'non ancora risposta'}</span>`;
-      return `<p class="dom">${esc(testo)}</p><p class="ris">${corpo}</p>`;
+      let corpo;
+      if (r) corpo = esc(r);
+      else if (q.bozza) corpo = `<span class="bozza">bozza scritta da noi, il cliente non l'ha ancora confermata</span>${esc(q.bozza)}`;
+      else corpo = `<span class="vuota">${saltate[k] ? 'saltata dal cliente' : 'non ancora risposta'}</span>`;
+      return `<p class="dom">${esc(q.testo)}</p><p class="ris">${corpo}</p>`;
     });
-    box.innerHTML = righe.length ? righe.join('') : '<p class="nota">Nessuna risposta.</p>';
+    const link = `<p class="nota" style="margin:0 0 16px">Link del questionario:
+      <a href="../outreach-${esc(slug)}/" target="_blank" rel="noopener">onboarding.davidecaiazzo.it/outreach-${esc(slug)}/</a></p>`;
+    box.innerHTML = (Object.keys(domande).length ? link : '') + (righe.length ? righe.join('') : '<p class="nota">Nessuna risposta.</p>');
   }).catch(e => { box.innerHTML = `<p class="nota">Non riesco a leggerle: ${esc(e.message)}</p>`; });
+}
+
+// Sospendi = ferma tutto per quel cliente (outreach, aggiornamento numeri) ma non tocca niente.
+// Elimina = gli toglie l'accesso e lo nasconde; i dati restano in archivio, si può recuperare.
+function azioneCliente(azione, slug){
+  const ref = db.collection('clienti').doc(slug);
+  ref.get().then(snap => {
+    if (!snap.exists) return;
+    const c = snap.data();
+    const chi = c.nome || slug;
+
+    if (azione === 'sospendi') {
+      if (!confirm(`Sospendere ${chi}?\n\nSi fermano il suo outreach e l'aggiornamento dei suoi numeri. Nessun dato viene perso e puoi riattivarlo quando vuoi.`)) return;
+      return ref.update({ sospeso: true, sospeso_il: new Date().toISOString() });
+    }
+    if (azione === 'riattiva') {
+      return ref.update({ sospeso: false, riattivato_il: new Date().toISOString() });
+    }
+    if (azione === 'elimina') {
+      if (!confirm(`Eliminare ${chi}?\n\nPerde l'accesso alla dashboard e sparisce da questo elenco. I suoi dati restano in archivio, quindi si può recuperare.`)) return;
+      if (prompt('Per confermare scrivi ELIMINA') !== 'ELIMINA') return;
+      const emails = (c.email_autorizzate || []).map(e => String(e).toLowerCase());
+      return Promise.all(emails.map(e => db.collection('accessi').doc(e).delete().catch(() => {})))
+        .then(() => ref.update({
+          eliminato: true, eliminato_il: new Date().toISOString(),
+          sospeso: true, email_autorizzate: [], email_prima_di_eliminare: emails
+        }));
+    }
+  }).then(() => { elencoTutto(); })
+    .catch(e => alert("Non ce l'ho fatta: " + e.message));
+}
+
+// --- questionari di onboarding ------------------------------------------
+// Le risposte stanno in onboarding_wizard/{slug}; i testi delle domande stanno
+// nella pagina del cliente, quindi la leggiamo e ne estraiamo le coppie id/domanda.
+const testiDomande = {};
+
+function ripulisci(t){
+  return String(t).replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+}
+
+// Dalla pagina del cliente prendiamo testo della domanda E bozza scritta da noi.
+function caricaDomande(slug){
+  if (testiDomande[slug]) return Promise.resolve(testiDomande[slug]);
+  return fetch(`../outreach-${slug}/`).then(r => r.ok ? r.text() : '').then(html => {
+    const mappa = {};
+    const re = /\{\s*id:\s*"([^"]+)"\s*,\s*text:\s*"((?:[^"\\]|\\.)*)"([\s\S]*?)\}\s*[,\]]/g;
+    let m;
+    while ((m = re.exec(html))) {
+      const resto = m[3] || '';
+      const d = /draft:\s*"((?:[^"\\]|\\.)*)"/.exec(resto);
+      mappa[m[1]] = { testo: ripulisci(m[2]), bozza: d ? ripulisci(d[1]) : '' };
+    }
+    testiDomande[slug] = mappa;
+    return mappa;
+  }).catch(() => ({}));
 }
 
 function creaCliente(user){
@@ -376,7 +444,7 @@ function creaCliente(user){
       Il questionario è in preparazione: lo trovi qui sotto col suo link appena è pronto.`;
     ['email','trascrizione','nome','brand','fonti'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
     const fs = document.getElementById('filestato'); if (fs) fs.textContent = '';
-    elencoClienti(); elencoQuestionari();
+    elencoTutto();
   }).catch(e => {
     msg.className = 'msg err';
     msg.textContent = e.code === 'permission-denied'
