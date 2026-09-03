@@ -183,10 +183,45 @@ button.text:hover{ color:var(--ink); text-decoration:underline; }
   line-height:1.5; padding:20px 24px; border-top:1px solid var(--line); margin-top:auto;
 }
 .footer-privacy a{ color:var(--ink-soft); }
+
+/* --- selettore settori Sales Navigator --- */
+.sn-wrap{margin-top:14px;}
+.sn-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;}
+.sn-search{flex:1;min-width:200px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;background:var(--paper-raised);}
+.sn-count{font-size:13px;color:var(--ink-soft);white-space:nowrap;}
+.sn-count b{color:var(--ink);}
+.sn-clear{background:none;border:none;color:var(--ink-soft);text-decoration:underline;cursor:pointer;font:inherit;font-size:13px;padding:0;}
+.sn-groups{border:1px solid var(--line);border-radius:12px;max-height:46vh;overflow-y:auto;background:var(--paper-raised);}
+.sn-group{border-bottom:1px solid var(--line);}
+.sn-group:last-child{border-bottom:none;}
+.sn-group-head{display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;user-select:none;}
+.sn-group-head:hover{background:var(--paper);}
+.sn-caret{width:10px;height:10px;border-right:2px solid var(--ink-soft);border-bottom:2px solid var(--ink-soft);transform:rotate(-45deg);transition:transform .15s ease;flex:none;margin-left:2px;}
+.sn-group.open>.sn-group-head .sn-caret{transform:rotate(45deg);}
+.sn-group-name{flex:1;font-weight:600;font-size:14px;}
+.sn-badge{font-size:12px;color:var(--ink-soft);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:2px 9px;}
+.sn-badge.on{background:var(--accent);color:var(--paper);}
+.sn-group-body{display:none;padding:2px 14px 12px 26px;}
+.sn-group.open>.sn-group-body{display:block;}
+.sn-sub{margin:8px 0 4px;}
+.sn-sub-head{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;}
+.sn-sub-all{background:none;border:none;color:var(--accent);cursor:pointer;font:inherit;font-size:12px;text-decoration:underline;padding:0;text-transform:none;letter-spacing:0;}
+.sn-item{display:flex;align-items:flex-start;gap:9px;padding:4px 0;font-size:14px;cursor:pointer;}
+.sn-item input{margin-top:3px;flex:none;width:15px;height:15px;accent-color:var(--accent);}
+.sn-empty{padding:16px;color:var(--ink-soft);font-size:13.5px;}
+.sn-chosen{margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;}
+.sn-chip{background:var(--paper);border-radius:999px;padding:4px 10px;font-size:12.5px;display:flex;align-items:center;gap:6px;}
+.sn-chip button{background:none;border:none;cursor:pointer;color:var(--ink-soft);font-size:14px;line-height:1;padding:0;}
+/* --- campi link (newsletter, blog) --- */
+.lk-row{display:flex;gap:8px;margin-bottom:8px;}
+.lk-row input{flex:1;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;background:var(--paper-raised);}
+.lk-row button{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:18px;line-height:1;padding:0 4px;}
+.lk-add{background:none;border:1px dashed var(--line);border-radius:10px;padding:8px 12px;cursor:pointer;font:inherit;font-size:13.5px;color:var(--ink-soft);}
 </style>
 
 <div id="app"></div>
 
+<script src="../settori-sales-navigator.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
@@ -222,6 +257,7 @@ const SECTIONS = [
   { title: "Target e mercato", questions: [
     { id:"mercato_settore", text:"In che settore opera l'attività?", draft:"Mi occupo di finanza agevolata (bandi a fondo perduto nazionali e regionali), controllo di gestione operativo e rating ESG con progetti di sostenibilità." },
     { id:"mercato_target", text:"Chi è il vostro target cliente? Descrivete l'avatar: ruolo, tipo di azienda, dipendenti, fatturato.", draft:"Punto soprattutto su PMI del Nord Italia, dalla Toscana in su, incluse Emilia Romagna e Liguria, con 10-50 dipendenti. Il focus iniziale è l'ospitalità (hotel 3-4 stelle), ma ho già ottenuto risultati anche in manifatturiero, logistica e industria." },
+    { id:"mercato_settori_target", type:"settori", text:"Su quali settori vuoi che costruiamo le liste di contatti?", draft:"", hint:"Sono le categorie di Sales Navigator: apri i gruppi e spunta quelle giuste. Puoi cercare per parola. Meglio poche e precise che tante generiche." },
     { id:"mercato_clienti_attuali", text:"Chi sono i vostri clienti attuali? Se possibile, indicateci delle referenze.", draft:"" },
     { id:"mercato_problemi", text:"Quali problemi dei vostri clienti risolvete?", draft:"Il vero problema delle PMI non è solo il fatturato, ma crescere senza disperdere risorse, con un obiettivo chiaro. Spesso mancano strumenti per misurare le performance, competenze strategiche per guidare l'azienda e conoscenza degli strumenti pubblici che potrebbero diventare leve concrete di sviluppo. Anche la sostenibilità, se non è strutturata, rischia di restare una parola vuota, senza impatto reale sul business." },
     { id:"mercato_esclusioni", text:"Ci sono clienti o aziende con cui non potete lavorare?", draft:"Al momento non ho aziende o persone specifiche da escludere.\n\nConsidero comunque concorrenti diretti chi offre finanza agevolata, controllo di gestione o rating ESG per PMI, in particolare nel settore ospitalità.", critical:true, criticalNote:"Campo di sicurezza: questi nomi non li contatteremo mai. Se conosci aziende o persone specifiche da escludere, aggiungile qui sopra." },
@@ -246,6 +282,7 @@ const SECTIONS = [
   { title: "Marketing e attività commerciale", questions: [
     { id:"mkt_acquisizione", text:"Come avete acquisito i vostri clienti finora?", draft:"" },
     { id:"mkt_canali", text:"Quali canali di marketing avete usato per acquisirli?", draft:"Il canale principale è LinkedIn, sia con i post organici che con le newsletter. Il sito è un po' datato e oggi non lo uso come canale principale di comunicazione." },
+    { id:"mkt_newsletter_blog", type:"links", text:"Avete una newsletter, un blog o altri canali dove pubblicate contenuti?", draft:"", hint:"Incolla i link (sito, blog, newsletter, canale YouTube, podcast). Ci servono per capire come parlate ai vostri clienti e riusare i vostri contenuti nei messaggi." },
     { id:"mkt_non_funzionato", text:"Cosa avete provato in passato che non ha funzionato?", draft:"" },
     { id:"mkt_canali_futuri", text:"Ci sono canali che ritenete interessanti e non avete ancora usato?", draft:"" },
     { id:"mkt_investimento", text:"State investendo in marketing in questo momento? Avete mai investito?", draft:"" },
@@ -490,16 +527,151 @@ function statusChip(q){
   return `<span class="status-chip missing">Da compilare</span>`;
 }
 
+
+function renderSettori(q, value){
+  // separatore ';' e non ',': molti nomi di settore contengono gia' una virgola
+  const scelti = (value||'').split(';').map(s=>s.trim()).filter(Boolean);
+  const dati = window.SN_SETTORI || [];
+  return `
+    <div class="sn-wrap">
+      <div class="sn-toolbar">
+        <input class="sn-search" id="snSearch" type="text" placeholder="Cerca un settore (es. edilizia, software, sanità)..." />
+        <span class="sn-count"><b id="snN">${scelti.length}</b> selezionati</span>
+        <button class="sn-clear" id="snClear" type="button">Azzera</button>
+      </div>
+      <div class="sn-groups" id="snGroups"></div>
+      <div class="sn-chosen" id="snChosen"></div>
+    </div>`;
+}
+
+function bindSettori(q, value){
+  const dati = window.SN_SETTORI || [];
+  let scelti = new Set((value||'').split(';').map(s=>s.trim()).filter(Boolean));
+  const groupsEl = document.getElementById('snGroups');
+  const chosenEl = document.getElementById('snChosen');
+  const nEl = document.getElementById('snN');
+  const searchEl = document.getElementById('snSearch');
+  const aperti = new Set();
+
+  function vociDi(g){
+    if (g.voci) return g.voci;
+    return g.sottogruppi.reduce((a,s)=>a.concat(s.voci), []);
+  }
+  function filtra(q2){
+    if (!q2) return dati;
+    const t = q2.toLowerCase();
+    return dati.map(g => {
+      if (g.voci) {
+        const v = g.voci.filter(x => x.toLowerCase().includes(t));
+        return v.length ? { gruppo:g.gruppo, voci:v } : null;
+      }
+      const sg = g.sottogruppi.map(s => {
+        const v = s.voci.filter(x => x.toLowerCase().includes(t));
+        return v.length ? { nome:s.nome, voci:v } : null;
+      }).filter(Boolean);
+      return sg.length ? { gruppo:g.gruppo, sottogruppi:sg } : null;
+    }).filter(Boolean);
+  }
+  function itemHtml(v){
+    const on = scelti.has(v);
+    return `<label class="sn-item"><input type="checkbox" data-v="${v.replace(/"/g,'&quot;')}" ${on?'checked':''}/><span>${v}</span></label>`;
+  }
+  function render(){
+    const term = (searchEl.value||'').trim();
+    const lista = filtra(term);
+    if (!lista.length) { groupsEl.innerHTML = `<div class="sn-empty">Nessun settore trovato per "${term}".</div>`; return; }
+    groupsEl.innerHTML = lista.map(g => {
+      const tutte = vociDi(g);
+      const nSel = tutte.filter(v => scelti.has(v)).length;
+      const open = term || aperti.has(g.gruppo);
+      const corpo = g.voci
+        ? g.voci.map(itemHtml).join('')
+        : g.sottogruppi.map(s => `
+            <div class="sn-sub">
+              <div class="sn-sub-head"><span>${s.nome}</span><button type="button" class="sn-sub-all" data-all="${s.voci.join('||').replace(/"/g,'&quot;')}">seleziona tutti</button></div>
+              ${s.voci.map(itemHtml).join('')}
+            </div>`).join('');
+      return `<div class="sn-group ${open?'open':''}" data-g="${g.gruppo.replace(/"/g,'&quot;')}">
+        <div class="sn-group-head"><span class="sn-caret"></span><span class="sn-group-name">${g.gruppo}</span>
+          <span class="sn-badge ${nSel?'on':''}">${nSel?nSel+' su '+tutte.length:tutte.length}</span></div>
+        <div class="sn-group-body">${corpo}</div>
+      </div>`;
+    }).join('');
+    groupsEl.querySelectorAll('.sn-group-head').forEach(h => {
+      h.onclick = () => {
+        const g = h.parentElement.dataset.g;
+        if (aperti.has(g)) aperti.delete(g); else aperti.add(g);
+        h.parentElement.classList.toggle('open');
+      };
+    });
+    groupsEl.querySelectorAll('.sn-item input').forEach(cb => {
+      cb.onchange = () => { cb.checked ? scelti.add(cb.dataset.v) : scelti.delete(cb.dataset.v); sync(); };
+    });
+    groupsEl.querySelectorAll('.sn-sub-all').forEach(b => {
+      b.onclick = (ev) => {
+        ev.stopPropagation();
+        b.dataset.all.split('||').forEach(v => scelti.add(v));
+        sync();
+      };
+    });
+  }
+  function sync(){
+    nEl.textContent = scelti.size;
+    chosenEl.innerHTML = [...scelti].map(v => `<span class="sn-chip">${v}<button type="button" data-x="${v.replace(/"/g,'&quot;')}">×</button></span>`).join('');
+    chosenEl.querySelectorAll('button').forEach(b => { b.onclick = () => { scelti.delete(b.dataset.x); render(); sync(); }; });
+    render();
+  }
+  searchEl.oninput = render;
+  document.getElementById('snClear').onclick = () => { scelti.clear(); sync(); };
+  sync();
+  return () => [...scelti].join('; ');
+}
+
+function renderLinks(q, value){
+  const righe = (value||'').split(/[,\n]/).map(s=>s.trim()).filter(Boolean);
+  if (!righe.length) righe.push('');
+  return `<div class="sn-wrap" id="lkWrap">
+    ${righe.map(v => `<div class="lk-row"><input type="url" value="${v.replace(/"/g,'&quot;')}" placeholder="https://..." /><button type="button" class="lk-del" title="Togli">×</button></div>`).join('')}
+    <button type="button" class="lk-add" id="lkAdd">+ aggiungi un altro link</button>
+  </div>`;
+}
+
+function bindLinks(){
+  const wrap = document.getElementById('lkWrap');
+  function bindDel(){
+    wrap.querySelectorAll('.lk-del').forEach(b => {
+      b.onclick = () => {
+        if (wrap.querySelectorAll('.lk-row').length > 1) b.parentElement.remove();
+        else b.parentElement.querySelector('input').value = '';
+      };
+    });
+  }
+  document.getElementById('lkAdd').onclick = () => {
+    const row = document.createElement('div');
+    row.className = 'lk-row';
+    row.innerHTML = '<input type="url" placeholder="https://..." /><button type="button" class="lk-del" title="Togli">×</button>';
+    wrap.insertBefore(row, document.getElementById('lkAdd'));
+    bindDel();
+    row.querySelector('input').focus();
+  };
+  bindDel();
+  return () => [...wrap.querySelectorAll('input')].map(i => i.value.trim()).filter(Boolean).join(', ');
+}
+
 function renderQuestion(){
   const q = ALL[state.i];
   const existing = state.answers[q.id];
   const value = existing !== undefined ? existing : q.draft;
+  const campo = q.type === 'settori' ? renderSettori(q, value)
+              : q.type === 'links' ? renderLinks(q, value)
+              : `<textarea id="answerBox" placeholder="Scrivi qui la risposta...">${(value||'').replace(/</g,'&lt;')}</textarea>`;
   const html = `
     <div class="card-panel">
       <p class="eyebrow">${q.sectionTitle}</p>
       ${statusChip(q)}
       <h2 class="question">${q.text}</h2>
-      <textarea id="answerBox" placeholder="Scrivi qui la risposta...">${(value||'').replace(/</g,'&lt;')}</textarea>
+      ${q.hint ? `<p class="hint" style="margin:0 0 4px;">${q.hint}</p>` : ''}
+      ${campo}
       ${q.critical ? `<div class="critical-note">⚠ ${q.criticalNote}</div>` : ''}
       <div class="actions">
         <div class="left">
@@ -511,8 +683,11 @@ function renderQuestion(){
     </div>
   `;
   renderShell(html);
+  const leggiValore = q.type === 'settori' ? bindSettori(q, value)
+                    : q.type === 'links' ? bindLinks()
+                    : () => document.getElementById('answerBox').value.trim();
   document.getElementById('nextBtn').onclick = () => {
-    const val = document.getElementById('answerBox').value.trim();
+    const val = leggiValore().trim();
     state.answers[q.id] = val;
     state.skipped[q.id] = val === '';
     advance();
