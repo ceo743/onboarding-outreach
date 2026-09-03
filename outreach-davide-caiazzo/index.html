@@ -220,16 +220,16 @@ try {
 } catch(e) {}
 /* TEMPLATE · per un nuovo cliente: cambia questi 4 valori, popola i draft nelle SECTIONS
    (prima persona, senza "(fonte:...)"), aggiorna il webhook se serve un hook dedicato. */
-const CLIENT_NAME = "Davide Caiazzo";
-const CLIENT_SLUG = "davide-caiazzo";
-const GATE_EMAIL = "davide.caiazzo@gmail.com";
+let CLIENT_NAME = "Davide Caiazzo";
+let CLIENT_SLUG = "davide-caiazzo";
+let GATE_EMAIL = "davide.caiazzo@gmail.com";
 // Vero solo sulla pagina modello (onboarding.davidecaiazzo.it): li' mostriamo il LOGIN del team.
-const IS_TEMPLATE = CLIENT_SLUG.charAt(0) === "[";
+let IS_TEMPLATE = CLIENT_SLUG.charAt(0) === "[";
 // Anteprima per il team: si sfoglia il questionario esattamente com'e', ma non si puo' inviare
 // e non si salva niente. Vale SOLO sulla pagina modello, mai su quella di un cliente vero.
 const ANTEPRIMA = IS_TEMPLATE && new URLSearchParams(location.search).has('anteprima');
 const WEBHOOK_URL = "https://hooks.zapier.com/hooks/catch/6421650/442abaj/";
-const STORAGE_KEY = "dcacademy_onboarding_" + CLIENT_SLUG;
+let STORAGE_KEY = "dcacademy_onboarding_" + CLIENT_SLUG;
 
 const SECTIONS = [
   { title: "Anagrafica", questions: [
@@ -237,7 +237,7 @@ const SECTIONS = [
     { id:"anag_email", text:"Email", draft:"davide.caiazzo@gmail.com" },
   ]},
   { title: "Storia e informazioni generali", questions: [
-    { id:"storia_nascita", text:"Da quanto siete nati? Raccontateci una veloce panoramica della vostra storia.", draft:"" },
+    { id:"storia_nascita", text:"Da quanto siete nati? Raccontateci una veloce panoramica della vostra storia.", draft:"Siamo basati a Milano, di fianco alla stazione centrale. Alle spalle ci sono più di trent'anni passati nel trade finance, a strutturare operazioni di finanziamento dell'esportazione di beni industriali, in particolare credito fornitore." },
     { id:"storia_eventi", text:"Che eventi rilevanti vi hanno portato dove siete ora? Sviluppo prodotti, contratti importanti, fusioni, acquisizioni.", draft:"" },
     { id:"storia_strategia", text:"Qual è la vostra strategia di crescita? Su quali punti si basa il piano industriale?", draft:"In Italia ci concentriamo su due fronti: le aziende italiane che hanno società produttive all'estero e i produttori italiani di macchinari destinati all'export. I clienti puramente esteri restano fuori dal focus di questa attività, anche se ci arriviamo di riflesso passando dal fornitore italiano." },
   ]},
@@ -247,7 +247,7 @@ const SECTIONS = [
     { id:"mercato_clienti_attuali", text:"Chi sono i vostri clienti attuali? Se possibile, indicateci delle referenze.", draft:"Sul nostro sito sono già pubblicati i loghi di una serie di clienti: quelli si possono citare. Oltre a quelli preferiamo non andare." },
     { id:"mercato_problemi", text:"Quali problemi dei vostri clienti risolvete?", draft:"Chi vende macchinari all'estero deve poter offrire anche il finanziamento, altrimenti perde contro concorrenti cinesi o turchi che costano meno: il prodotto italiano costa di più e il finanziamento è il vantaggio che si aggiunge.\n\nChi compra, spesso la controllata estera di un gruppo italiano, ha bisogno di dilazionare il pagamento di una linea produttiva senza passare dalla propria banca." },
     { id:"mercato_esclusioni", text:"Ci sono clienti o aziende con cui non potete lavorare?", draft:"- i nostri due concorrenti diretti in Italia (i nomi ve li mandiamo a parte)\n- i clienti attuali e quelli già in acquisizione\n\nI clienti passati invece si possono contattare: servono anche per arrivare a clienti nuovi. Per concorrente diretto intendiamo chi in Italia struttura credito fornitore sull'esportazione di macchinari: in tutto siamo tre società.", critical:true, criticalNote:"Campo di sicurezza: questi nomi non li contatteremo mai. Se il cliente conosce aziende o persone specifiche da escludere, va aggiornato qui sopra." },
-    { id:"mercato_eventi_settore", text:"Ci sono eventi o novità nel vostro settore che possono influenzare il business, in positivo o negativo?", draft:"" },
+    { id:"mercato_eventi_settore", text:"Ci sono eventi o novità nel vostro settore che possono influenzare il business, in positivo o negativo?", draft:"Stiamo partecipando a Visioni made in Italy, il concorso di SIMEST: giriamo un corto sulla nostra attività, che verrà poi proiettato nelle ambasciate italiane e negli eventi internazionali. Fino alla consegna resta inedito, la presentazione è prevista per fine settembre.\n\nÈ appena uscita anche una comunicazione di SACE e SIMEST in cui viene citato per esteso il nostro nome, insieme a quello degli altri due operatori italiani." },
   ]},
   { title: "Offerta e soluzioni", questions: [
     { id:"offerta_servizi", text:"Che servizi o prodotti offrite?", draft:"Compriamo, rivendiamo e finanziamo macchinari e impianti. Il prodotto, come lo applichiamo noi, si chiama credito fornitore, in inglese supplier's credit." },
@@ -641,6 +641,32 @@ function renderAll(){
   renderQuestion();
 }
 
+// Pagina unica: con ?c=<slug> carica cliente, email e bozze da Firestore.
+// Cosi' un cliente nuovo e' online nello stesso momento in cui viene creato, senza pubblicare file.
+function caricaClienteDaId(){
+  const id = new URLSearchParams(location.search).get('c');
+  if (!id || !IS_TEMPLATE) return Promise.resolve();
+  const url = 'https://firestore.googleapis.com/v1/projects/dc-outreach-dashboard/databases/(default)/documents/onboarding_wizard/' + encodeURIComponent(id);
+  return fetch(url).then(r => r.ok ? r.json() : null).then(doc => {
+    if (!doc) return;
+    const f = doc.fields || {};
+    CLIENT_SLUG = id;
+    CLIENT_NAME = (f.cliente && f.cliente.stringValue) || id;
+    GATE_EMAIL = ((f.email && f.email.stringValue) || '').toLowerCase();
+    STORAGE_KEY = 'dcacademy_onboarding_' + CLIENT_SLUG;
+    IS_TEMPLATE = false;
+    const bozze = (f.bozze && f.bozze.mapValue && f.bozze.mapValue.fields) || {};
+    SECTIONS.forEach(sec => sec.questions.forEach(q => {
+      const v = bozze[q.id] && bozze[q.id].stringValue;
+      if (v) q.draft = v;
+    }));
+    document.title = 'Onboarding · ' + CLIENT_NAME;
+  }).catch(() => {});
+}
+
+caricaClienteDaId().then(avviaPagina);
+
+function avviaPagina(){
 loadLocal();
 if (ANTEPRIMA) {
   state.stage = 'intro';
@@ -652,6 +678,7 @@ if (ANTEPRIMA) {
 }
 renderAll();
 pullFirestore().then(() => { watchFirestore(); });
+}
 
 window.addEventListener('storage', (ev) => {
   if (ev.key !== STORAGE_KEY || !ev.newValue) return;
