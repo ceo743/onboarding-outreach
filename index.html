@@ -163,6 +163,13 @@ button.text:hover{ color:var(--ink); text-decoration:underline; }
   background:var(--paper); border:1px solid var(--line); border-radius:9px; outline:none;
 }
 .gate input:focus{ border-color:var(--focus); box-shadow:0 0 0 3px var(--accent-soft); }
+.striscia-anteprima{
+  position:fixed; top:0; left:0; right:0; z-index:50; text-align:center;
+  background:var(--warn-soft); color:var(--warn); border-bottom:1px solid var(--warn);
+  font-family:ui-sans-serif,system-ui,sans-serif; font-size:13.5px; font-weight:600;
+  letter-spacing:.01em; padding:9px 16px;
+}
+body.con-striscia{ padding-top:38px; }
 .login-team{
   position:fixed; top:18px; right:22px; z-index:20;
   font-family:ui-sans-serif,system-ui,sans-serif; font-size:13.5px; font-weight:600;
@@ -218,6 +225,9 @@ const CLIENT_SLUG = "[slug-cliente]";
 const GATE_EMAIL = "[email@cliente.it]";
 // Vero solo sulla pagina modello (onboarding.davidecaiazzo.it): li' mostriamo il LOGIN del team.
 const IS_TEMPLATE = CLIENT_SLUG.charAt(0) === "[";
+// Anteprima per il team: si sfoglia il questionario esattamente com'e', ma non si puo' inviare
+// e non si salva niente. Vale SOLO sulla pagina modello, mai su quella di un cliente vero.
+const ANTEPRIMA = IS_TEMPLATE && new URLSearchParams(location.search).has('anteprima');
 const WEBHOOK_URL = "https://hooks.zapier.com/hooks/catch/6421650/442abaj/";
 const STORAGE_KEY = "dcacademy_onboarding_" + CLIENT_SLUG;
 
@@ -272,6 +282,7 @@ let state = { stage:'gate', i:0, answers:{}, skipped:{}, returnToRecap:false, su
 
 function saveLocal(){
   state.updatedAt = Date.now();
+  if (ANTEPRIMA) return;
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
   syncRemote();
   pushFirestore();
@@ -292,6 +303,7 @@ function pushFirestore(){
 
 let applyingRemote = false;
 function pullFirestore(){
+  if (ANTEPRIMA) return Promise.resolve();
   if (!fbDb) return Promise.resolve();
   return fbDb.collection('onboarding_wizard').doc(CLIENT_SLUG).get().then((snap) => {
     if (!snap.exists) return;
@@ -309,6 +321,7 @@ function pullFirestore(){
 }
 
 function watchFirestore(){
+  if (ANTEPRIMA) return;
   if (!fbDb) return;
   fbDb.collection('onboarding_wizard').doc(CLIENT_SLUG).onSnapshot((snap) => {
     if (!snap.exists) return;
@@ -352,6 +365,7 @@ function syncRemote(){
   } catch(e) {}
 }
 function loadLocal(){
+  if (ANTEPRIMA) return;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) { const parsed = JSON.parse(raw); state = Object.assign(state, parsed); }
@@ -593,6 +607,10 @@ function renderRecap(){
 }
 
 function submitFinal(){
+  if (ANTEPRIMA) {
+    alert("Questa è l'anteprima del questionario: serve a vedere com'è fatto, non si può inviare.");
+    return;
+  }
   state.submitted = true;
   state.stage = 'thanks';
   saveLocal();
@@ -624,6 +642,14 @@ function renderAll(){
 }
 
 loadLocal();
+if (ANTEPRIMA) {
+  state.stage = 'intro';
+  const striscia = document.createElement('div');
+  striscia.className = 'striscia-anteprima';
+  striscia.textContent = 'Anteprima del questionario · niente viene salvato e non si può inviare';
+  document.body.appendChild(striscia);
+  document.body.classList.add('con-striscia');
+}
 renderAll();
 pullFirestore().then(() => { watchFirestore(); });
 

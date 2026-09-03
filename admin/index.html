@@ -43,6 +43,10 @@ button{width:100%;padding:14px;border:0;border-radius:10px;background:var(--acce
   color:var(--paper-raised);font-size:16px;font-weight:600;cursor:pointer;
   font-family:ui-sans-serif,system-ui,sans-serif}
 button:hover{filter:brightness(1.06)}
+a.bottone{display:inline-block;padding:8px 14px;border-radius:10px;border:1px solid var(--line);
+  color:var(--ink-soft);text-decoration:none;font-family:ui-sans-serif,system-ui,sans-serif;
+  font-size:13.5px;font-weight:500;background:transparent}
+a.bottone:hover{color:var(--accent);border-color:var(--accent)}
 button.ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--line);font-weight:500}
 .msg{font-family:ui-sans-serif,system-ui,sans-serif;font-size:15px;margin:0 0 14px;min-height:1.2em}
 .msg.err{color:var(--warn)}
@@ -206,7 +210,10 @@ function vistaPannello(user){
   app.innerHTML = `
     <div class="topbar">
       <span>${esc(user.email)}</span>
-      <button class="ghost" id="esci">Esci</button>
+      <span style="display:flex;gap:10px;align-items:center">
+        <a class="ghost bottone" href="../?anteprima=1" target="_blank" rel="noopener">Guarda il questionario modello</a>
+        <button class="ghost" id="esci">Esci</button>
+      </span>
     </div>
     <p class="kicker">DC Academy</p>
     <h1>Aggiungi nuovo cliente</h1>
