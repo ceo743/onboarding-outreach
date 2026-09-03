@@ -310,8 +310,8 @@ function vistaPannello(user){
     <p class="sub">Servono solo la sua email e la trascrizione della call. Il resto lo ricaviamo noi.</p>
     <div class="card">
       <p class="msg" id="msg"></p>
-      <label for="email">Email del cliente</label>
-      <input id="email" type="email" placeholder="mario@azienda.it">
+      <label for="email">Email del cliente <span style="color:var(--warn)">*</span></label>
+      <input id="email" type="email" placeholder="mario@azienda.it" required autocomplete="off">
 
       <label for="trascrizione">Trascrizione della call</label>
       <textarea id="trascrizione" rows="8" placeholder="Incolla qui la trascrizione della call."></textarea>
@@ -567,7 +567,10 @@ function seguiPreparazione(slug, nome, link){
         if (stato === 'pronta') {
           clearInterval(battito);
           msg.className = 'msg ok';
-          msg.innerHTML = `<strong>${esc(nome)}</strong> è pronto: ${quante} risposte già scritte dalla call.<br>
+          // Preferisci sempre il nome scritto dal motore (letto per davvero dalla call):
+          // se il campo era stato lasciato vuoto, e' l'unico nome corretto che esiste.
+          const nomeReale = (f.cliente && f.cliente.stringValue) || nome;
+          msg.innerHTML = `<strong>${esc(nomeReale)}</strong> è pronto: ${quante} risposte già scritte dalla call.<br>
             ${inviata
               ? 'Email partita da academy@davidecaiazzo.it, in copia Chiara, Roberta e Davide.'
               : '<span style="color:var(--warn)">Email non partita' + (erroreMail ? ' (' + esc(erroreMail) + ')' : '') + '. Il questionario è pronto: mandagli tu il link.</span>'}<br>
@@ -595,12 +598,19 @@ function creaCliente(user){
   const brand = document.getElementById('brand').value.trim();
   const fonti = document.getElementById('fonti').value.trim();
   msg.className = 'msg err';
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { msg.textContent = "L'email non sembra valida."; return; }
+  if (!email) { msg.textContent = "L'email del cliente è obbligatoria."; document.getElementById('email').focus(); return; }
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { msg.textContent = "L'email non sembra valida."; document.getElementById('email').focus(); return; }
   if (trascrizione.length < 200) { msg.textContent = 'Incolla la trascrizione della call (o carica il file).'; return; }
 
-  const slug = slugify(nome || email.split('@')[0].replace(/[._]+/g, ' '));
+  const stimaSlug = email.split('@')[0].replace(/[._]+/g, ' ');
+  const slug = slugify(nome || stimaSlug);
   if (!slug) { msg.textContent = 'Non riesco a ricavare un nome: scrivilo nella parte facoltativa.'; return; }
-  const nomeVisibile = nome || email.split('@')[0].replace(/[._]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  // Il nome mostrato viene SOLO da quanto scritto qui o da quanto il motore legge nella
+  // trascrizione: mai indovinato dall'indirizzo email (dava nomi rotti tipo "D Avidecaiazzo"
+  // per email come d.rossi@... — e quel nome indovinato, se spedito al motore come fosse
+  // vero, gli toglieva ogni motivo per ricavarlo davvero dalla call).
+  const nomeVisibile = nome || null;
+  const nomeInAttesa = nome || 'Il cliente';
 
   msg.className = 'msg'; msg.textContent = 'Salvo la richiesta…';
   db.collection('onboarding_wizard').doc(slug).set({
@@ -617,7 +627,7 @@ function creaCliente(user){
     richiesto_il: new Date().toISOString(),
     richiesto_da: user.email
   }, { merge: true }).then(() => {
-    msg.textContent = 'Sto leggendo la call e scrivendo le sue domande… un minuto.';
+    msg.textContent = (nomeVisibile ? '' : nomeInAttesa + ': ') + 'sto leggendo la call e scrivendo le sue domande… un minuto.';
     return user.getIdToken().then(idToken => fetch(MOTORE, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id_token: idToken, slug, cliente: nomeVisibile, email,
@@ -625,7 +635,7 @@ function creaCliente(user){
     })).then(r => r.json().then(d => ({ ok: r.ok, d })));
   }).then(({ ok, d }) => {
     if (!ok || !d.ok) throw new Error((d && d.errore) || 'il motore non ha risposto');
-    return seguiPreparazione(slug, nomeVisibile, d.link);
+    return seguiPreparazione(slug, nomeVisibile || nomeInAttesa, d.link);
   }).then(() => {
     ['email','trascrizione','nome','brand','fonti'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
     const fs = document.getElementById('filestato'); if (fs) fs.textContent = '';

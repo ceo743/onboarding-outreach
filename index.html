@@ -472,7 +472,19 @@ const SECTIONS = [
 ];
 
 const ALL = [];
-SECTIONS.forEach((s, si) => s.questions.forEach((q) => ALL.push({ ...q, sectionIndex: si, sectionTitle: s.title })));
+const ALL_QUESTIONS_BY_ID = {};
+SECTIONS.forEach(sec => sec.questions.forEach(q => { ALL_QUESTIONS_BY_ID[q.id] = q; }));
+// ALL si ricostruisce da SECTIONS ogni volta che serve, MAI una copia congelata: le bozze
+// arrivano da Firestore in modo asincrono (caricaClienteDaId), dopo che lo script e' gia'
+// passato di qui. Una copia fatta una volta sola conteneva sempre draft:"" e nessuna delle
+// risposte scritte dalla call arrivava mai a schermo (bug trovato 03/09/2026 da Davide:
+// "dici che hai scritto le risposte ma qui non vedo un cazzo" — aveva ragione, 13 bozze
+// vere in Firestore, zero visibili).
+function ricostruisciAll(){
+  ALL.length = 0;
+  SECTIONS.forEach((s, si) => s.questions.forEach((q) => ALL.push({ ...q, sectionIndex: si, sectionTitle: s.title })));
+}
+ricostruisciAll();
 
 let state = { stage:'gate', i:0, answers:{}, skipped:{}, returnToRecap:false, submitted:false };
 
@@ -1067,7 +1079,8 @@ function caricaClienteDaId(){
     if (!doc) return;
     const f = doc.fields || {};
     CLIENT_SLUG = id;
-    CLIENT_NAME = (f.cliente && f.cliente.stringValue) || id;
+    const nomeNoto = (f.cliente && f.cliente.stringValue) || '';
+    CLIENT_NAME = nomeNoto || id;
     GATE_EMAIL = ((f.email && f.email.stringValue) || '').toLowerCase();
     STORAGE_KEY = 'dcacademy_onboarding_' + CLIENT_SLUG;
     IS_TEMPLATE = false;
@@ -1076,6 +1089,14 @@ function caricaClienteDaId(){
       const v = bozze[q.id] && bozze[q.id].stringValue;
       if (v) q.draft = v;
     }));
+    // L'email e (quando lo conosciamo gia') il nome li abbiamo raccolti noi in fase di
+    // creazione: non ha senso richiederli di nuovo vuoti. Pre-compilati come bozza, il
+    // cliente li conferma o li corregge come tutte le altre risposte gia' scritte.
+    const qEmail = ALL_QUESTIONS_BY_ID['anag_email'];
+    if (qEmail && !qEmail.draft && GATE_EMAIL) qEmail.draft = GATE_EMAIL;
+    const qNome = ALL_QUESTIONS_BY_ID['anag_nomecompleto'];
+    if (qNome && !qNome.draft && nomeNoto) qNome.draft = nomeNoto;
+    ricostruisciAll();
     document.title = 'Onboarding · ' + CLIENT_NAME;
   }).catch(() => {});
 }
