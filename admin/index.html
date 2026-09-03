@@ -116,32 +116,32 @@ a{color:var(--accent)}
 .topbar button{width:auto;padding:8px 14px;font-size:13.5px}
 .nota{font-family:inherit;font-size:13.5px;color:var(--ink-soft);
   line-height:1.5;margin:14px 0 0}
-details{border-bottom:1px solid var(--line)}
-details:last-child{border-bottom:0}
-summary{
+#elenco details{border-bottom:1px solid var(--line)}
+#elenco details:last-child{border-bottom:0}
+#elenco summary{
   display:grid; grid-template-columns:14px minmax(0,1fr) auto; gap:12px;
   align-items:center; padding:14px 2px; cursor:pointer; list-style:none;
 }
-summary::-webkit-details-marker{display:none}
-summary:hover{background:color-mix(in srgb, var(--ink) 3%, transparent)}
+#elenco summary::-webkit-details-marker{display:none}
+#elenco summary:hover{background:color-mix(in srgb, var(--ink) 3%, transparent)}
 .freccia{
   width:0;height:0;border-left:5px solid var(--ink-soft);
   border-top:4px solid transparent;border-bottom:4px solid transparent;
   transition:transform .12s ease; margin-left:4px;
 }
-details[open] .freccia{transform:rotate(90deg)}
-summary .testo{min-width:0;display:flex;flex-direction:column;gap:3px}
-summary .riga1{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;min-width:0}
-summary .chi{font-size:16.5px;font-weight:600;font-family:ui-sans-serif,system-ui,sans-serif}
-summary .stato{font-family:inherit;font-size:12.5px;color:var(--ink-soft)}
-summary .riga2{
+#elenco details[open] .freccia{transform:rotate(90deg)}
+#elenco summary .testo{min-width:0;display:flex;flex-direction:column;gap:3px}
+#elenco summary .riga1{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;min-width:0}
+#elenco summary .chi{font-size:16.5px;font-weight:600;font-family:ui-sans-serif,system-ui,sans-serif}
+#elenco summary .stato{font-family:inherit;font-size:12.5px;color:var(--ink-soft)}
+#elenco summary .riga2{
   font-family:inherit;font-size:12.5px;color:var(--ink-soft);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
-summary .azioni{display:flex;align-items:center;gap:8px}
+#elenco summary .azioni{display:flex;align-items:center;gap:8px;margin-left:auto}
 @media (max-width:620px){
-  summary{grid-template-columns:14px minmax(0,1fr); row-gap:10px}
-  summary .azioni{grid-column:2;justify-content:flex-start}
+  #elenco summary{grid-template-columns:14px minmax(0,1fr); row-gap:10px}
+  #elenco summary .azioni{grid-column:2;justify-content:flex-start}
 }
 .qa{margin:14px 0 4px}
 .qa .dom{font-family:inherit;font-size:13.5px;
@@ -150,6 +150,32 @@ summary .azioni{display:flex;align-items:center;gap:8px}
 .qa .vuota{color:var(--ink-soft);font-style:italic}
 .qa .bozza{display:block;font-family:inherit;font-size:12px;
   letter-spacing:.04em;text-transform:uppercase;color:var(--warn);margin-bottom:4px}
+/* blocco facoltativo, file, avanzamento */
+.piu{ border:1px solid var(--line-soft); border-radius:18px; background:var(--paper); margin:4px 0 20px; }
+.piu>summary{
+  list-style:none; cursor:pointer; padding:14px 18px; font-size:14px; font-weight:600;
+  color:var(--ink-soft); display:flex; align-items:center; gap:10px;
+}
+.piu>summary::-webkit-details-marker{display:none}
+.piu>summary::before{ content:"+"; font-size:16px; color:var(--ink-faint); }
+.piu[open]>summary::before{ content:"−"; }
+.piu>summary:hover{ color:var(--ink); }
+.piu .dentro{ padding:4px 18px 18px; }
+.file-riga{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:-6px 0 18px; }
+.file-btn{
+  display:inline-flex; align-items:center; gap:9px; padding:11px 18px; border-radius:99px;
+  border:1px dashed var(--line); color:var(--ink-soft); font-size:14px; font-weight:600; cursor:pointer;
+  transition:border-color .45s var(--curva), color .45s var(--curva), background .45s var(--curva);
+}
+.file-btn:hover{ border-color:var(--accent); color:var(--accent-ink); background:var(--accent-soft); }
+.file-riga input[type=file]{ display:none; }
+.file-riga .esito{ font-size:13px; color:var(--ink-faint); }
+.avanzamento{ display:flex; align-items:center; gap:11px; font-size:14.5px; color:var(--ink-soft); }
+.rotella{
+  width:16px; height:16px; border-radius:50%; border:2px solid var(--line);
+  border-top-color:var(--accent); animation:gira .8s linear infinite; flex:none;
+}
+@keyframes gira{ to{ transform:rotate(360deg); } }
 [hidden]{display:none!important}
 </style>
 
@@ -289,16 +315,15 @@ function vistaPannello(user){
 
       <label for="trascrizione">Trascrizione della call</label>
       <textarea id="trascrizione" rows="8" placeholder="Incolla qui la trascrizione della call."></textarea>
-      <p class="nota" style="margin:-6px 0 16px">
-        Oppure carica un file di testo:
-        <input type="file" id="file" accept=".txt,.md,.text,.vtt,.srt" style="font-size:13.5px">
-        <span id="filestato"></span><br>
-        Se hai la trascrizione in Word o PDF, aprila e incolla il testo qui sopra.
-      </p>
+      <div class="file-riga">
+        <label class="file-btn" for="file">Carica un file di testo
+          <input type="file" id="file" accept=".txt,.md,.text,.vtt,.srt"></label>
+        <span class="esito" id="filestato">Word e PDF non si leggono da qui: aprili e incolla il testo sopra.</span>
+      </div>
 
-      <details style="border:0;padding:0;margin-bottom:16px">
-        <summary style="font-size:14.5px;font-weight:500">Vuoi aggiungere altro? (facoltativo)</summary>
-        <div style="margin-top:14px">
+      <details class="piu">
+        <summary>Aggiungi nome, azienda e fonti (facoltativo)</summary>
+        <div class="dentro">
           <label for="nome">Nome e cognome</label>
           <input id="nome" placeholder="Lo ricaviamo dalla call se lo lasci vuoto">
           <label for="brand">Azienda</label>
@@ -507,6 +532,54 @@ function caricaDomande(slug){
   }).catch(() => ({}));
 }
 
+// Il motore lavora in sottofondo: qui seguiamo lo stato su Firestore e lo raccontiamo,
+// invece di lasciare il pulsante fermo per un minuto come se fosse rotto.
+function seguiPreparazione(slug, nome, link){
+  const msg = document.getElementById('msg');
+  const url = 'https://firestore.googleapis.com/v1/projects/dc-outreach-dashboard/databases/(default)/documents/onboarding_wizard/' + slug;
+  const inizio = Date.now();
+  msg.className = 'msg';
+  msg.innerHTML = '<span class="avanzamento"><span class="rotella"></span>Sto leggendo la call e scrivendo le sue risposte…</span>';
+
+  return new Promise(resolve => {
+    const battito = setInterval(() => {
+      fetch(url + '?t=' + Date.now()).then(r => r.ok ? r.json() : null).then(doc => {
+        const f = (doc && doc.fields) || {};
+        const stato = f.stato_preparazione && f.stato_preparazione.stringValue;
+        const errore = f.errore && f.errore.stringValue;
+        const erroreMail = f.errore_email && f.errore_email.stringValue;
+        const inviata = !!(f.email_inviata_il && f.email_inviata_il.stringValue);
+        const quante = f.bozze && f.bozze.mapValue ? Object.keys(f.bozze.mapValue.fields || {}).length : 0;
+
+        if (stato === 'errore') {
+          clearInterval(battito);
+          msg.className = 'msg err';
+          msg.textContent = 'La preparazione si è fermata: ' + (errore || 'errore sconosciuto');
+          return resolve();
+        }
+        if (stato === 'pronta') {
+          clearInterval(battito);
+          msg.className = 'msg ok';
+          msg.innerHTML = `<strong>${esc(nome)}</strong> è pronto: ${quante} risposte già scritte dalla call.<br>
+            ${inviata
+              ? 'Email partita da academy@davidecaiazzo.it, in copia Chiara, Roberta e Davide.'
+              : '<span style="color:var(--warn)">Email non partita' + (erroreMail ? ' (' + esc(erroreMail) + ')' : '') + '. Il questionario è pronto: mandagli tu il link.</span>'}<br>
+            Questionario: <a href="${esc(link)}" target="_blank" rel="noopener">${esc(link)}</a><br>
+            La dashboard nasce da sola quando ha finito di rispondere.`;
+          elencoTutto();
+          return resolve();
+        }
+        if (Date.now() - inizio > 240000) {
+          clearInterval(battito);
+          msg.className = 'msg err';
+          msg.textContent = 'Ci sta mettendo troppo. Ricarica fra un minuto: se il questionario è pronto lo vedi qui sotto.';
+          return resolve();
+        }
+      }).catch(() => {});
+    }, 3000);
+  });
+}
+
 function creaCliente(user){
   const msg = document.getElementById('msg');
   const email = document.getElementById('email').value.trim().toLowerCase();
@@ -545,13 +618,8 @@ function creaCliente(user){
     })).then(r => r.json().then(d => ({ ok: r.ok, d })));
   }).then(({ ok, d }) => {
     if (!ok || !d.ok) throw new Error((d && d.errore) || 'il motore non ha risposto');
-    msg.className = 'msg ok';
-    msg.innerHTML = `Fatto: <strong>${esc(nomeVisibile)}</strong>. ${d.bozze} risposte già scritte dalla call.<br>
-      ${d.email_inviata
-        ? 'Email partita da academy@davidecaiazzo.it, in copia Chiara, Roberta e Davide.'
-        : '<span style="color:var(--warn)">Email NON partita: manca la password di invio sul server. Il questionario è comunque pronto, il link puoi mandarlo a mano.</span>'}<br>
-      Il suo questionario: <a href="${esc(d.link)}" target="_blank" rel="noopener">${esc(d.link)}</a><br>
-      La dashboard nasce da sola quando ha finito di rispondere.`;
+    return seguiPreparazione(slug, nomeVisibile, d.link);
+  }).then(() => {
     ['email','trascrizione','nome','brand','fonti'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
     const fs = document.getElementById('filestato'); if (fs) fs.textContent = '';
     elencoTutto();
