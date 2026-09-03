@@ -54,6 +54,19 @@ a{color:var(--accent)}
 .topbar button{width:auto;padding:8px 14px;font-size:13.5px}
 .nota{font-family:ui-sans-serif,system-ui,sans-serif;font-size:13.5px;color:var(--ink-soft);
   line-height:1.5;margin:14px 0 0}
+details{border-bottom:1px solid var(--line);padding:12px 0}
+details:last-child{border-bottom:0}
+summary{cursor:pointer;font-size:16px;font-weight:600;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"▸ ";color:var(--ink-soft)}
+details[open] summary::before{content:"▾ "}
+summary .stato{font-family:ui-sans-serif,system-ui,sans-serif;font-size:13px;
+  font-weight:500;color:var(--ink-soft);margin-left:8px}
+.qa{margin:14px 0 4px}
+.qa .dom{font-family:ui-sans-serif,system-ui,sans-serif;font-size:13.5px;
+  color:var(--ink-soft);margin:0 0 3px}
+.qa .ris{margin:0 0 14px;font-size:16.5px;line-height:1.5;white-space:pre-wrap}
+.qa .vuota{color:var(--ink-soft);font-style:italic}
 [hidden]{display:none!important}
 </style>
 
@@ -179,10 +192,16 @@ function vistaPannello(user){
     <div class="card">
       <h1 style="font-size:19px;margin-bottom:14px">Clienti attivi</h1>
       <div id="elenco"><p class="nota">Carico…</p></div>
+    </div>
+    <div class="card">
+      <h1 style="font-size:19px;margin-bottom:6px">Questionari compilati</h1>
+      <p class="nota" style="margin:0 0 10px">Quello che i clienti hanno scritto nel loro onboarding.</p>
+      <div id="questionari"><p class="nota">Carico…</p></div>
     </div>`;
   document.getElementById('esci').onclick = () => auth.signOut();
   document.getElementById('crea').onclick = () => creaCliente(user);
   elencoClienti();
+  elencoQuestionari();
 }
 
 function elencoClienti(){
@@ -203,6 +222,75 @@ function elencoClienti(){
     const box = document.getElementById('elenco');
     if (box) box.innerHTML = `<p class="nota">Non riesco a leggere l'elenco: ${esc(e.message)}</p>`;
   });
+}
+
+// --- questionari di onboarding ------------------------------------------
+// Le risposte stanno in onboarding_wizard/{slug}; i testi delle domande stanno
+// nella pagina del cliente, quindi la leggiamo e ne estraiamo le coppie id/domanda.
+const testiDomande = {};
+
+function caricaDomande(slug){
+  if (testiDomande[slug]) return Promise.resolve(testiDomande[slug]);
+  return fetch(`../outreach-${slug}/`).then(r => r.ok ? r.text() : '').then(html => {
+    const mappa = {};
+    const re = /\{\s*id:\s*"([^"]+)"\s*,\s*text:\s*"((?:[^"\\]|\\.)*)"/g;
+    let m;
+    while ((m = re.exec(html))) mappa[m[1]] = m[2].replace(/\\"/g, '"').replace(/\\n/g, ' ');
+    testiDomande[slug] = mappa;
+    return mappa;
+  }).catch(() => ({}));
+}
+
+function elencoQuestionari(){
+  db.collection('onboarding_wizard').get().then(snap => {
+    const box = document.getElementById('questionari');
+    if (!box) return;
+    if (snap.empty) { box.innerHTML = '<p class="nota">Nessun questionario ancora.</p>'; return; }
+    const pezzi = [];
+    snap.forEach(d => {
+      const dati = d.data();
+      let stato = {};
+      try { stato = JSON.parse(dati.stato_json || '{}'); } catch(e) {}
+      const risposte = stato.answers || {};
+      const n = Object.keys(risposte).filter(k => String(risposte[k] || '').trim()).length;
+      const etichetta = stato.submitted ? 'confermato dal cliente' : 'in corso';
+      pezzi.push(`<details data-slug="${esc(d.id)}">
+        <summary>${esc(dati.cliente || d.id)}<span class="stato">${etichetta} · ${n} risposte</span></summary>
+        <div class="qa" data-box="${esc(d.id)}"><p class="nota">Apro…</p></div>
+      </details>`);
+    });
+    box.innerHTML = pezzi.join('');
+    box.querySelectorAll('details').forEach(det => {
+      det.addEventListener('toggle', () => { if (det.open) mostraRisposte(det.dataset.slug); });
+    });
+  }).catch(e => {
+    const box = document.getElementById('questionari');
+    if (box) box.innerHTML = `<p class="nota">Non riesco a leggere i questionari: ${esc(e.message)}</p>`;
+  });
+}
+
+function mostraRisposte(slug){
+  const box = document.querySelector(`[data-box="${slug}"]`);
+  if (!box || box.dataset.fatto) return;
+  box.dataset.fatto = '1';
+  Promise.all([
+    db.collection('onboarding_wizard').doc(slug).get(),
+    caricaDomande(slug)
+  ]).then(([snap, domande]) => {
+    let stato = {};
+    try { stato = JSON.parse((snap.data() || {}).stato_json || '{}'); } catch(e) {}
+    const risposte = stato.answers || {};
+    const saltate = stato.skipped || {};
+    const chiavi = Object.keys(domande).length ? Object.keys(domande) : Object.keys(risposte);
+    const righe = chiavi.map(k => {
+      const testo = domande[k] || k;
+      const r = String(risposte[k] || '').trim();
+      const corpo = r ? esc(r)
+        : `<span class="vuota">${saltate[k] ? 'saltata dal cliente' : 'non ancora risposta'}</span>`;
+      return `<p class="dom">${esc(testo)}</p><p class="ris">${corpo}</p>`;
+    });
+    box.innerHTML = righe.length ? righe.join('') : '<p class="nota">Nessuna risposta.</p>';
+  }).catch(e => { box.innerHTML = `<p class="nota">Non riesco a leggerle: ${esc(e.message)}</p>`; });
 }
 
 function creaCliente(user){
