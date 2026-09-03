@@ -245,9 +245,9 @@ function vistaPannello(user){
       </details>
 
       <button id="crea">Crea il cliente</button>
-      <p class="nota">Appena premi, il cliente ha la sua dashboard. Il questionario glielo prepariamo
-        leggendo la call, il suo sito e il suo LinkedIn: lo trovi qui sotto come "pronto" con il link
-        da mandargli, di solito entro mezz'ora.</p>
+      <p class="nota">Prepariamo le sue domande leggendo la call, il suo sito e il suo LinkedIn, poi
+        parte da sola l'email da academy@davidecaiazzo.it con il link per rispondere (in copia Chiara,
+        Roberta e Davide). Di solito entro mezz'ora. La dashboard nasce da sola quando ha finito.</p>
     </div>
     <div class="card">
       <h1 style="font-size:19px;margin-bottom:6px">Clienti</h1>
@@ -285,6 +285,7 @@ function elencoTutto(){
     });
     if (wizard) wizard.forEach(d => {
       const w = d.data();
+      if (w.eliminato) { delete mappa[d.id]; return; }
       let stato = {};
       try { stato = JSON.parse(w.stato_json || '{}'); } catch(e) {}
       const risposte = stato.answers || {};
@@ -302,7 +303,8 @@ function elencoTutto(){
 
     box.innerHTML = voci.map(v => {
       let stato;
-      if (v.preparazione === 'da_preparare') stato = 'questionario in preparazione';
+      if (v.preparazione === 'da_preparare') stato = 'domande in preparazione';
+      else if (v.preparazione === 'pronta' && !v.confermato && !v.nRisposte) stato = 'link mandato, in attesa che risponda';
       else if (v.confermato) stato = `questionario confermato · ${v.nRisposte} risposte`;
       else if (v.questionario) stato = `questionario da compilare · ${v.nRisposte} risposte`;
       else stato = 'nessun questionario';
@@ -312,8 +314,8 @@ function elencoTutto(){
           <span class="stato">${stato}</span>
           <span class="azioni">
             <span class="link">${esc(v.emails.join(', ') || 'nessuna email')}</span>
-            ${v.scheda ? `<button class="mini" data-azione="${v.sospeso ? 'riattiva' : 'sospendi'}" data-slug="${esc(v.slug)}">${v.sospeso ? 'Riattiva' : 'Sospendi'}</button>
-            <button class="mini rischio" data-azione="elimina" data-slug="${esc(v.slug)}">Elimina</button>` : ''}
+            ${v.scheda ? `<button class="mini" data-azione="${v.sospeso ? 'riattiva' : 'sospendi'}" data-slug="${esc(v.slug)}">${v.sospeso ? 'Riattiva' : 'Sospendi'}</button>` : ''}
+            <button class="mini rischio" data-azione="elimina" data-slug="${esc(v.slug)}">Elimina</button>
           </span>
         </summary>
         ${v.questionario ? `<div class="qa" data-box="${esc(v.slug)}"><p class="nota">Apro…</p></div>`
@@ -368,12 +370,24 @@ function mostraRisposte(slug){
 
 // Sospendi = ferma tutto per quel cliente (outreach, aggiornamento numeri) ma non tocca niente.
 // Elimina = gli toglie l'accesso e lo nasconde; i dati restano in archivio, si può recuperare.
+// Il questionario non si puo' cancellare (le regole lo vietano): lo marchiamo eliminato e sparisce.
+function nascondiQuestionario(slug){
+  return db.collection('onboarding_wizard').doc(slug).get().then(w => {
+    if (!w.exists) return null;
+    const d = w.data();
+    return db.collection('onboarding_wizard').doc(slug).set({
+      cliente: d.cliente || slug, slug: slug, stato_json: d.stato_json || '{}',
+      eliminato: true, eliminato_il: new Date().toISOString()
+    }, { merge: true });
+  }).catch(() => null);
+}
+
 function azioneCliente(azione, slug){
   const ref = db.collection('clienti').doc(slug);
   ref.get().then(snap => {
-    if (!snap.exists) return;
-    const c = snap.data();
+    const c = snap.exists ? snap.data() : {};
     const chi = c.nome || slug;
+    if (!snap.exists && azione !== 'elimina') return;
 
     if (azione === 'sospendi') {
       if (!confirm(`Sospendere ${chi}?\n\nSi fermano il suo outreach e l'aggiornamento dei suoi numeri. Nessun dato viene perso e puoi riattivarlo quando vuoi.`)) return;
@@ -387,10 +401,11 @@ function azioneCliente(azione, slug){
       if (prompt('Per confermare scrivi ELIMINA') !== 'ELIMINA') return;
       const emails = (c.email_autorizzate || []).map(e => String(e).toLowerCase());
       return Promise.all(emails.map(e => db.collection('accessi').doc(e).delete().catch(() => {})))
-        .then(() => ref.update({
+        .then(() => snap.exists ? ref.update({
           eliminato: true, eliminato_il: new Date().toISOString(),
           sospeso: true, email_autorizzate: [], email_prima_di_eliminare: emails
-        }));
+        }) : null)
+        .then(() => nascondiQuestionario(slug));
     }
   }).then(() => { elencoTutto(); })
     .catch(e => alert("Non ce l'ho fatta: " + e.message));
@@ -433,47 +448,36 @@ function creaCliente(user){
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { msg.textContent = "L'email non sembra valida."; return; }
   if (trascrizione.length < 200) { msg.textContent = 'Incolla la trascrizione della call (o carica il file).'; return; }
 
-  // lo slug viene dal nome se c'e', altrimenti dalla parte prima della chiocciola
   const slug = slugify(nome || email.split('@')[0].replace(/[._]+/g, ' '));
   if (!slug) { msg.textContent = 'Non riesco a ricavare un nome: scrivilo nella parte facoltativa.'; return; }
   const nomeVisibile = nome || email.split('@')[0].replace(/[._]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
-  msg.className = 'msg'; msg.textContent = 'Creo il cliente…';
-  const ref = db.collection('clienti').doc(slug);
-
-  ref.get().then(snap => {
-    const dati = snap.exists ? snap.data() : schedaVuota(slug, nomeVisibile, brand);
-    if (brand) dati.brand = brand;
-    dati.email_autorizzate = (dati.email_autorizzate || []).map(e => String(e).toLowerCase());
-    if (!dati.email_autorizzate.includes(email)) dati.email_autorizzate.push(email);
-    return ref.set(dati)
-      .then(() => db.collection('accessi').doc(email).set({ slug, aggiornato: new Date().toISOString() }))
-      .then(() => db.collection('onboarding_wizard').doc(slug).set({
-        cliente: nomeVisibile,
-        slug: slug,
-        email: email,
-        stato_json: JSON.stringify({ stage:'gate', i:0, answers:{}, skipped:{}, returnToRecap:false, submitted:false, updatedAt: Date.now() }),
-        updatedAt: Date.now(),
-        trascrizione: trascrizione,
-        fonti: fonti,
-        stato_preparazione: 'da_preparare',
-        richiesto_il: new Date().toISOString(),
-        richiesto_da: user.email
-      }, { merge: true }))
-      .then(() => ({ giaCera: snap.exists }));
-  }).then(({ giaCera }) => {
+  msg.className = 'msg'; msg.textContent = 'Salvo la richiesta…';
+  db.collection('onboarding_wizard').doc(slug).set({
+    cliente: nomeVisibile,
+    slug: slug,
+    email: email,
+    brand: brand,
+    fonti: fonti,
+    stato_json: JSON.stringify({ stage:'gate', i:0, answers:{}, skipped:{}, returnToRecap:false, submitted:false, updatedAt: Date.now() }),
+    updatedAt: Date.now(),
+    trascrizione: trascrizione,
+    stato_preparazione: 'da_preparare',
+    eliminato: false,
+    richiesto_il: new Date().toISOString(),
+    richiesto_da: user.email
+  }, { merge: true }).then(() => {
     msg.className = 'msg ok';
-    msg.innerHTML = `${giaCera ? 'Cliente aggiornato' : 'Cliente creato'}: <strong>${esc(nomeVisibile)}</strong>.
-      Dashboard subito attiva, link da mandargli: <a href="${DASHBOARD}" target="_blank" rel="noopener">${DASHBOARD}</a>.<br>
-      Il questionario è in preparazione: lo trovi qui sotto col suo link appena è pronto.`;
+    msg.innerHTML = `Ricevuto: <strong>${esc(nomeVisibile)}</strong>.
+      Prepariamo le sue domande dalla call e gli mandiamo noi l'email da academy@davidecaiazzo.it
+      con il link per rispondere, in copia Chiara, Roberta e te.
+      La sua dashboard nasce da sola quando ha finito di rispondere.`;
     ['email','trascrizione','nome','brand','fonti'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
     const fs = document.getElementById('filestato'); if (fs) fs.textContent = '';
     elencoTutto();
   }).catch(e => {
     msg.className = 'msg err';
-    msg.textContent = e.code === 'permission-denied'
-      ? "Il tuo utente non è abilitato a creare clienti. Chiedi a Davide di aggiungerti."
-      : "Non ce l'ho fatta: " + e.message;
+    msg.textContent = "Non ce l'ho fatta: " + e.message;
   });
 }
 
