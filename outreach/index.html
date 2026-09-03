@@ -269,15 +269,12 @@ const SECTIONS = [
   { title: "Target e mercato", questions: [
     { id:"mercato_settore", text:"In che settore opera l'attività?", draft:"" },
     { id:"mercato_target", text:"Chi è il vostro target cliente? Descrivete l'avatar: ruolo, tipo di azienda, dipendenti, fatturato.", draft:"" },
-    { id:"sn_navigator", type:"scelta", text:"Hai gia\u0300 attivo LinkedIn Sales Navigator?", draft:"",
-      hint:"Serve per lavorare: e\u0300 lo strumento con cui costruiamo le liste di persone da contattare e con cui scriviamo. Senza, LinkedIn normale permette pochissime ricerche e nessun filtro serio, e il lavoro si ferma.",
+    { id:"sn_navigator", type:"scelta", text:"Attiva LinkedIn Sales Navigator prima di partire", draft:"",
+      nota:"E\u0300 lo strumento con cui costruiamo le liste di persone da contattare e con cui scriviamo: senza, LinkedIn normale permette pochissime ricerche e nessun filtro serio, e il lavoro non parte. Si attiva dal tuo profilo LinkedIn, c'e\u0300 un mese di prova gratuito e poi costa circa 100 euro al mese. Ci serve solo la tua conferma.",
       opzioni:[
-        {v:"Si\u0300, gia\u0300 attivo", d:"Perfetto, in fase di avvio lo colleghiamo e partiamo."},
-        {v:"No, lo attivo io", d:"Va attivato prima di partire: c'e\u0300 un mese di prova gratuito, poi circa 100 euro al mese."},
-        {v:"No, vorrei capirlo meglio", d:"Nessun problema, ne parliamo in fase di avvio e ti spieghiamo cosa cambia."}
+        {v:"E\u0300 gia\u0300 attivo", d:"Bene, in fase di avvio lo colleghiamo e partiamo."},
+        {v:"Lo attivo subito", d:"Perfetto, avvisaci appena e\u0300 fatto cosi\u0300 fissiamo l'avvio."}
       ] },
-    { id:"sn_account_email", text:"Con quale email accedi al tuo LinkedIn?", draft:"",
-      hint:"Ci serve solo per sapere su quale profilo lavorare. La password NON va scritta qui e non la chiediamo mai per iscritto: l'accesso lo imposti tu direttamente in fase di avvio, insieme a noi." },
     { id:"mercato_settori_target", type:"settori", nota:"Sono esattamente i settori che useremo dentro Sales Navigator per costruire le liste: piu\u0300 sono precisi, piu\u0300 le persone che contattiamo somigliano ai tuoi clienti migliori.", text:"Su quali settori vuoi che costruiamo le liste di contatti?", draft:"", hint:"Sono le categorie di Sales Navigator: apri i gruppi e spunta quelle giuste. Puoi cercare per parola. Meglio poche e precise che tante generiche." },
     { id:"mercato_clienti_attuali", text:"Chi sono i vostri clienti attuali? Se possibile, indicateci delle referenze.", draft:"" },
     { id:"mercato_problemi", text:"Quali problemi dei vostri clienti risolvete?", draft:"" },
@@ -714,8 +711,8 @@ function renderQuestion(){
       ${statusChip(q)}
       <h2 class="question">${q.text}</h2>
       ${q.hint ? `<p class="hint" style="margin:0 0 4px;">${q.hint}</p>` : ''}
-      ${campo}
       ${q.nota ? `<div class="nota-box"><b>Perche\u0300 te lo chiediamo</b>${q.nota}</div>` : ''}
+      ${campo}
       ${q.critical ? `<div class="critical-note">⚠ ${q.criticalNote}</div>` : ''}
       <div class="actions">
         <div class="left">
