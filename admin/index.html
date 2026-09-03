@@ -499,9 +499,10 @@ function creaCliente(user){
   }).then(({ ok, d }) => {
     if (!ok || !d.ok) throw new Error((d && d.errore) || 'il motore non ha risposto');
     msg.className = 'msg ok';
-    msg.innerHTML = `Fatto: <strong>${esc(nomeVisibile)}</strong>.
-      ${d.bozze} risposte già scritte dalla call, email partita da academy@davidecaiazzo.it
-      con Chiara, Roberta e te in copia.<br>
+    msg.innerHTML = `Fatto: <strong>${esc(nomeVisibile)}</strong>. ${d.bozze} risposte già scritte dalla call.<br>
+      ${d.email_inviata
+        ? 'Email partita da academy@davidecaiazzo.it, in copia Chiara, Roberta e Davide.'
+        : '<span style="color:var(--warn)">Email NON partita: manca la password di invio sul server. Il questionario è comunque pronto, il link puoi mandarlo a mano.</span>'}<br>
       Il suo questionario: <a href="${esc(d.link)}" target="_blank" rel="noopener">${esc(d.link)}</a><br>
       La dashboard nasce da sola quando ha finito di rispondere.`;
     ['email','trascrizione','nome','brand','fonti'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
