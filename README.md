@@ -15,8 +15,12 @@ Ogni domanda in `SECTIONS` accetta un campo `type`:
 | assente | area di testo normale |
 | `settori` | selettore dei settori Sales Navigator: gruppi apribili, ricerca, contatore, "seleziona tutti" per sottogruppo |
 | `links` | elenco di campi link con "+ aggiungi un altro link" |
+| `scelta` | scelta singola tra le `opzioni` indicate ({v: testo, d: spiegazione}) |
 
-Campo `hint` opzionale: riga di spiegazione sotto la domanda.
+Campi opzionali: `hint` (riga di spiegazione sotto la domanda) e `nota` (riquadro "Perché te lo chiediamo").
+
+## Credenziali: mai nel wizard
+Il wizard chiede **l'email** dell'account LinkedIn, mai la password. Le risposte viaggiano in chiaro verso Firestore, Zapier e il foglio Google e restano nel localStorage del cliente: non è un posto dove far transitare credenziali. L'accesso al profilo lo imposta il cliente stesso in fase di avvio sul browser dedicato (le routine hanno già la regola "non tentare login, lo sistema l'utente"). Non aggiungere campi password.
 
 **Settori**: la risposta viene salvata come stringa con separatore **punto e virgola** (`; `), non virgola — molti nomi di settore contengono già una virgola (es. "Fabbricazione di macchinari per l'agricoltura, l'edilizia e l'industria mineraria"). Se si cambia separatore vanno aggiornati sia il salvataggio sia la rilettura, altrimenti le selezioni si spezzano.
 

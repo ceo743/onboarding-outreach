@@ -217,6 +217,16 @@ button.text:hover{ color:var(--ink); text-decoration:underline; }
 .lk-row input{flex:1;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;background:var(--paper-raised);}
 .lk-row button{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:18px;line-height:1;padding:0 4px;}
 .lk-add{background:none;border:1px dashed var(--line);border-radius:10px;padding:8px 12px;cursor:pointer;font:inherit;font-size:13.5px;color:var(--ink-soft);}
+
+/* --- scelta singola (si/no) --- */
+.sc-opt{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;cursor:pointer;background:var(--paper-raised);}
+.sc-opt:hover{border-color:var(--accent);}
+.sc-opt input{margin-top:3px;flex:none;accent-color:var(--accent);}
+.sc-opt.on{border-color:var(--accent);background:var(--accent-soft);}
+.sc-txt b{display:block;font-size:14.5px;}
+.sc-txt span{font-size:13px;color:var(--ink-soft);}
+.nota-box{border:1px solid var(--line);border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:10px;padding:12px 14px;margin:12px 0 4px;font-size:13.5px;line-height:1.55;}
+.nota-box b{display:block;margin-bottom:4px;}
 </style>
 
 <div id="app"></div>
@@ -257,7 +267,16 @@ const SECTIONS = [
   { title: "Target e mercato", questions: [
     { id:"mercato_settore", text:"In che settore opera l'attività?", draft:"Mi occupo di finanza agevolata (bandi a fondo perduto nazionali e regionali), controllo di gestione operativo e rating ESG con progetti di sostenibilità." },
     { id:"mercato_target", text:"Chi è il vostro target cliente? Descrivete l'avatar: ruolo, tipo di azienda, dipendenti, fatturato.", draft:"Punto soprattutto su PMI del Nord Italia, dalla Toscana in su, incluse Emilia Romagna e Liguria, con 10-50 dipendenti. Il focus iniziale è l'ospitalità (hotel 3-4 stelle), ma ho già ottenuto risultati anche in manifatturiero, logistica e industria." },
-    { id:"mercato_settori_target", type:"settori", text:"Su quali settori vuoi che costruiamo le liste di contatti?", draft:"", hint:"Sono le categorie di Sales Navigator: apri i gruppi e spunta quelle giuste. Puoi cercare per parola. Meglio poche e precise che tante generiche." },
+    { id:"sn_navigator", type:"scelta", text:"Hai gia\u0300 attivo LinkedIn Sales Navigator?", draft:"",
+      hint:"Serve per lavorare: e\u0300 lo strumento con cui costruiamo le liste di persone da contattare e con cui scriviamo. Senza, LinkedIn normale permette pochissime ricerche e nessun filtro serio, e il lavoro si ferma.",
+      opzioni:[
+        {v:"Si\u0300, gia\u0300 attivo", d:"Perfetto, in fase di avvio lo colleghiamo e partiamo."},
+        {v:"No, lo attivo io", d:"Va attivato prima di partire: c'e\u0300 un mese di prova gratuito, poi circa 100 euro al mese."},
+        {v:"No, vorrei capirlo meglio", d:"Nessun problema, ne parliamo in fase di avvio e ti spieghiamo cosa cambia."}
+      ] },
+    { id:"sn_account_email", text:"Con quale email accedi al tuo LinkedIn?", draft:"",
+      hint:"Ci serve solo per sapere su quale profilo lavorare. La password NON va scritta qui e non la chiediamo mai per iscritto: l'accesso lo imposti tu direttamente in fase di avvio, insieme a noi." },
+    { id:"mercato_settori_target", type:"settori", nota:"Sono esattamente i settori che useremo dentro Sales Navigator per costruire le liste: piu\u0300 sono precisi, piu\u0300 le persone che contattiamo somigliano ai tuoi clienti migliori.", text:"Su quali settori vuoi che costruiamo le liste di contatti?", draft:"", hint:"Sono le categorie di Sales Navigator: apri i gruppi e spunta quelle giuste. Puoi cercare per parola. Meglio poche e precise che tante generiche." },
     { id:"mercato_clienti_attuali", text:"Chi sono i vostri clienti attuali? Se possibile, indicateci delle referenze.", draft:"" },
     { id:"mercato_problemi", text:"Quali problemi dei vostri clienti risolvete?", draft:"Il vero problema delle PMI non è solo il fatturato, ma crescere senza disperdere risorse, con un obiettivo chiaro. Spesso mancano strumenti per misurare le performance, competenze strategiche per guidare l'azienda e conoscenza degli strumenti pubblici che potrebbero diventare leve concrete di sviluppo. Anche la sostenibilità, se non è strutturata, rischia di restare una parola vuota, senza impatto reale sul business." },
     { id:"mercato_esclusioni", text:"Ci sono clienti o aziende con cui non potete lavorare?", draft:"Al momento non ho aziende o persone specifiche da escludere.\n\nConsidero comunque concorrenti diretti chi offre finanza agevolata, controllo di gestione o rating ESG per PMI, in particolare nel settore ospitalità.", critical:true, criticalNote:"Campo di sicurezza: questi nomi non li contatteremo mai. Se conosci aziende o persone specifiche da escludere, aggiungile qui sopra." },
@@ -658,12 +677,34 @@ function bindLinks(){
   return () => [...wrap.querySelectorAll('input')].map(i => i.value.trim()).filter(Boolean).join(', ');
 }
 
+
+function renderScelta(q, value){
+  const sel = (value||'').trim();
+  return `<div class="sn-wrap">
+    ${(q.opzioni||[]).map(o => `
+      <label class="sc-opt ${sel===o.v?'on':''}">
+        <input type="radio" name="scelta_${q.id}" value="${o.v.replace(/"/g,'&quot;')}" ${sel===o.v?'checked':''}/>
+        <span class="sc-txt"><b>${o.v}</b><span>${o.d||''}</span></span>
+      </label>`).join('')}
+  </div>`;
+}
+
+function bindScelta(q){
+  const wrap = document.querySelectorAll(`input[name="scelta_${q.id}"]`);
+  wrap.forEach(r => { r.onchange = () => {
+    document.querySelectorAll('.sc-opt').forEach(l => l.classList.remove('on'));
+    if (r.checked) r.closest('.sc-opt').classList.add('on');
+  };});
+  return () => { const c = [...wrap].find(r => r.checked); return c ? c.value : ''; };
+}
+
 function renderQuestion(){
   const q = ALL[state.i];
   const existing = state.answers[q.id];
   const value = existing !== undefined ? existing : q.draft;
   const campo = q.type === 'settori' ? renderSettori(q, value)
               : q.type === 'links' ? renderLinks(q, value)
+              : q.type === 'scelta' ? renderScelta(q, value)
               : `<textarea id="answerBox" placeholder="Scrivi qui la risposta...">${(value||'').replace(/</g,'&lt;')}</textarea>`;
   const html = `
     <div class="card-panel">
@@ -672,6 +713,7 @@ function renderQuestion(){
       <h2 class="question">${q.text}</h2>
       ${q.hint ? `<p class="hint" style="margin:0 0 4px;">${q.hint}</p>` : ''}
       ${campo}
+      ${q.nota ? `<div class="nota-box"><b>Perche\u0300 te lo chiediamo</b>${q.nota}</div>` : ''}
       ${q.critical ? `<div class="critical-note">⚠ ${q.criticalNote}</div>` : ''}
       <div class="actions">
         <div class="left">
@@ -685,6 +727,7 @@ function renderQuestion(){
   renderShell(html);
   const leggiValore = q.type === 'settori' ? bindSettori(q, value)
                     : q.type === 'links' ? bindLinks()
+                    : q.type === 'scelta' ? bindScelta(q)
                     : () => document.getElementById('answerBox').value.trim();
   document.getElementById('nextBtn').onclick = () => {
     const val = leggiValore().trim();
