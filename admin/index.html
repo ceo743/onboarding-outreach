@@ -34,6 +34,10 @@ label{display:block;font-family:ui-sans-serif,system-ui,sans-serif;font-size:14p
 input{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:10px;
   background:var(--paper);color:var(--ink);font-size:16px;font-family:ui-sans-serif,system-ui,sans-serif;
   margin-bottom:16px}
+textarea{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:10px;
+  background:var(--paper);color:var(--ink);font-size:15.5px;line-height:1.5;
+  font-family:ui-sans-serif,system-ui,sans-serif;margin-bottom:16px;resize:vertical}
+textarea:focus{outline:none;border-color:var(--focus);box-shadow:0 0 0 3px var(--accent-soft)}
 input:focus{outline:none;border-color:var(--focus);box-shadow:0 0 0 3px var(--accent-soft)}
 button{width:100%;padding:14px;border:0;border-radius:10px;background:var(--accent);
   color:var(--paper-raised);font-size:16px;font-weight:600;cursor:pointer;
@@ -176,18 +180,37 @@ function vistaPannello(user){
     </div>
     <p class="kicker">DC Academy</p>
     <h1>Aggiungi nuovo cliente</h1>
-    <p class="sub">Nome ed email: il cliente ha subito la sua dashboard e il suo accesso.</p>
+    <p class="sub">Servono solo la sua email e la trascrizione della call. Il resto lo ricaviamo noi.</p>
     <div class="card">
       <p class="msg" id="msg"></p>
-      <label for="nome">Nome e cognome del cliente</label>
-      <input id="nome" placeholder="Mario Rossi">
-      <label for="email">La sua email</label>
+      <label for="email">Email del cliente</label>
       <input id="email" type="email" placeholder="mario@azienda.it">
-      <label for="brand">Azienda (facoltativo)</label>
-      <input id="brand" placeholder="Rossi Costruzioni">
+
+      <label for="trascrizione">Trascrizione della call</label>
+      <textarea id="trascrizione" rows="8" placeholder="Incolla qui la trascrizione della call."></textarea>
+      <p class="nota" style="margin:-6px 0 16px">
+        Oppure carica un file di testo:
+        <input type="file" id="file" accept=".txt,.md,.text,.vtt,.srt" style="font-size:13.5px">
+        <span id="filestato"></span><br>
+        Se hai la trascrizione in Word o PDF, aprila e incolla il testo qui sopra.
+      </p>
+
+      <details style="border:0;padding:0;margin-bottom:16px">
+        <summary style="font-size:14.5px;font-weight:500">Vuoi aggiungere altro? (facoltativo)</summary>
+        <div style="margin-top:14px">
+          <label for="nome">Nome e cognome</label>
+          <input id="nome" placeholder="Lo ricaviamo dalla call se lo lasci vuoto">
+          <label for="brand">Azienda</label>
+          <input id="brand" placeholder="Rossi Costruzioni">
+          <label for="fonti">Sito e profilo LinkedIn</label>
+          <input id="fonti" placeholder="rossicostruzioni.it, linkedin.com/in/mariorossi">
+        </div>
+      </details>
+
       <button id="crea">Crea il cliente</button>
-      <p class="nota">Gli si manda il link della dashboard: al primo accesso si crea lui la password.
-        I numeri restano a zero finché non parte il suo outreach.</p>
+      <p class="nota">Appena premi, il cliente ha la sua dashboard. Il questionario glielo prepariamo
+        leggendo la call, il suo sito e il suo LinkedIn: lo trovi qui sotto come "pronto" con il link
+        da mandargli, di solito entro mezz'ora.</p>
     </div>
     <div class="card">
       <h1 style="font-size:19px;margin-bottom:14px">Clienti attivi</h1>
@@ -200,6 +223,16 @@ function vistaPannello(user){
     </div>`;
   document.getElementById('esci').onclick = () => auth.signOut();
   document.getElementById('crea').onclick = () => creaCliente(user);
+  document.getElementById('file').onchange = (ev) => {
+    const f = ev.target.files[0];
+    if (!f) return;
+    const lettore = new FileReader();
+    lettore.onload = () => {
+      document.getElementById('trascrizione').value = String(lettore.result || '');
+      document.getElementById('filestato').textContent = ' letto: ' + f.name;
+    };
+    lettore.readAsText(f);
+  };
   elencoClienti();
   elencoQuestionari();
 }
@@ -253,9 +286,13 @@ function elencoQuestionari(){
       try { stato = JSON.parse(dati.stato_json || '{}'); } catch(e) {}
       const risposte = stato.answers || {};
       const n = Object.keys(risposte).filter(k => String(risposte[k] || '').trim()).length;
-      const etichetta = stato.submitted ? 'confermato dal cliente' : 'in corso';
+      let etichetta = stato.submitted ? 'confermato dal cliente' : 'in corso';
+      if (dati.stato_preparazione === 'da_preparare') etichetta = 'questionario in preparazione';
+      else if (dati.stato_preparazione === 'pronta' && !n) etichetta = 'questionario pronto, da mandare al cliente';
       pezzi.push(`<details data-slug="${esc(d.id)}">
         <summary>${esc(dati.cliente || d.id)}<span class="stato">${etichetta} · ${n} risposte</span></summary>
+        ${dati.stato_preparazione === 'pronta' ? `<p class="nota" style="margin:10px 0 0">Link del questionario:
+          <a href="../outreach-${esc(d.id)}/" target="_blank" rel="noopener">onboarding.davidecaiazzo.it/outreach-${esc(d.id)}/</a></p>` : ''}
         <div class="qa" data-box="${esc(d.id)}"><p class="nota">Apro…</p></div>
       </details>`);
     });
@@ -295,38 +332,56 @@ function mostraRisposte(slug){
 
 function creaCliente(user){
   const msg = document.getElementById('msg');
-  const nome = document.getElementById('nome').value.trim();
   const email = document.getElementById('email').value.trim().toLowerCase();
+  const trascrizione = document.getElementById('trascrizione').value.trim();
+  const nome = document.getElementById('nome').value.trim();
   const brand = document.getElementById('brand').value.trim();
+  const fonti = document.getElementById('fonti').value.trim();
   msg.className = 'msg err';
-  if (!nome) { msg.textContent = 'Manca il nome del cliente.'; return; }
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { msg.textContent = "L'email non sembra valida."; return; }
-  const slug = slugify(nome);
-  if (!slug) { msg.textContent = 'Il nome deve contenere almeno una lettera.'; return; }
+  if (trascrizione.length < 200) { msg.textContent = 'Incolla la trascrizione della call (o carica il file).'; return; }
+
+  // lo slug viene dal nome se c'e', altrimenti dalla parte prima della chiocciola
+  const slug = slugify(nome || email.split('@')[0].replace(/[._]+/g, ' '));
+  if (!slug) { msg.textContent = 'Non riesco a ricavare un nome: scrivilo nella parte facoltativa.'; return; }
+  const nomeVisibile = nome || email.split('@')[0].replace(/[._]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
   msg.className = 'msg'; msg.textContent = 'Creo il cliente…';
   const ref = db.collection('clienti').doc(slug);
+
   ref.get().then(snap => {
-    const dati = snap.exists ? snap.data() : schedaVuota(slug, nome, brand);
+    const dati = snap.exists ? snap.data() : schedaVuota(slug, nomeVisibile, brand);
     if (brand) dati.brand = brand;
     dati.email_autorizzate = (dati.email_autorizzate || []).map(e => String(e).toLowerCase());
     if (!dati.email_autorizzate.includes(email)) dati.email_autorizzate.push(email);
     return ref.set(dati)
       .then(() => db.collection('accessi').doc(email).set({ slug, aggiornato: new Date().toISOString() }))
+      .then(() => db.collection('onboarding_wizard').doc(slug).set({
+        cliente: nomeVisibile,
+        slug: slug,
+        email: email,
+        stato_json: JSON.stringify({ stage:'gate', i:0, answers:{}, skipped:{}, returnToRecap:false, submitted:false, updatedAt: Date.now() }),
+        updatedAt: Date.now(),
+        trascrizione: trascrizione,
+        fonti: fonti,
+        stato_preparazione: 'da_preparare',
+        richiesto_il: new Date().toISOString(),
+        richiesto_da: user.email
+      }, { merge: true }))
       .then(() => ({ giaCera: snap.exists }));
   }).then(({ giaCera }) => {
     msg.className = 'msg ok';
-    msg.innerHTML = `${giaCera ? 'Cliente aggiornato' : 'Cliente creato'}: <strong>${esc(nome)}</strong>.
-      Mandagli questo link: <a href="${DASHBOARD}" target="_blank" rel="noopener">${DASHBOARD}</a>`;
-    document.getElementById('nome').value = '';
-    document.getElementById('email').value = '';
-    document.getElementById('brand').value = '';
-    elencoClienti();
+    msg.innerHTML = `${giaCera ? 'Cliente aggiornato' : 'Cliente creato'}: <strong>${esc(nomeVisibile)}</strong>.
+      Dashboard subito attiva, link da mandargli: <a href="${DASHBOARD}" target="_blank" rel="noopener">${DASHBOARD}</a>.<br>
+      Il questionario è in preparazione: lo trovi qui sotto col suo link appena è pronto.`;
+    ['email','trascrizione','nome','brand','fonti'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    const fs = document.getElementById('filestato'); if (fs) fs.textContent = '';
+    elencoClienti(); elencoQuestionari();
   }).catch(e => {
     msg.className = 'msg err';
     msg.textContent = e.code === 'permission-denied'
       ? "Il tuo utente non è abilitato a creare clienti. Chiedi a Davide di aggiungerti."
-      : 'Non ce l\'ho fatta: ' + e.message;
+      : "Non ce l'ho fatta: " + e.message;
   });
 }
 
